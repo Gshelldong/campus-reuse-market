@@ -1,0 +1,85 @@
+/* Angular Material 预置主题（azure-blue） */
+@import '@angular/material/prebuilt-themes/azure-blue.css';
+
+/* 本地字体，不依赖 Google CDN */
+@import '@fontsource/roboto/300.css';
+@import '@fontsource/roboto/400.css';
+@import '@fontsource/roboto/500.css';
+@import '@fontsource/material-icons';
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: Roboto, 'Helvetica Neue', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  background: #f4f6f8;
+}
+
+.material-icons {
+  font-family: 'Material Icons';
+  font-weight: normal;
+  font-style: normal;
+  font-size: 24px;
+  display: inline-block;
+  line-height: 1;
+  letter-spacing: normal;
+  text-transform: none;
+  white-space: nowrap;
+  word-wrap: normal;
+  direction: ltr;
+  -webkit-font-feature-settings: 'liga';
+  font-feature-settings: 'liga';
+  -webkit-font-smoothing: antialiased;
+  vertical-align: middle;
+}
+
+/* 页面通用容器 */
+.page-container {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 16px;
+  box-sizing: border-box;
+}
+
+.page-full-height {
+  min-height: calc(100% - 64px);
+}
+
+/* 通用卡片网格 */
+.goods-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 16px;
+}
+
+.form-card {
+  max-width: 520px;
+  margin: 24px auto;
+  padding: 24px 28px;
+}
+
+.toolbar-spacer {
+  flex: 1 1 auto;
+}
+
+.empty-tip {
+  text-align: center;
+  color: #999;
+  padding: 48px 0;
+}
+
+table {
+  width: 100%;
+}
+
+/* 图片占位 */
+.img-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #e8ecf1;
+  color: #aab4bf;
+}
