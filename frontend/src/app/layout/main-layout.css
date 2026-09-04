@@ -1,0 +1,61 @@
+.nav-toolbar {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  gap: 8px;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #fff;
+  text-decoration: none;
+  font-size: 18px;
+  font-weight: 500;
+  margin-right: 16px;
+}
+
+.nav-links {
+  display: flex;
+  gap: 4px;
+
+  a {
+    color: rgba(255, 255, 255, 0.85);
+    text-decoration: none;
+    padding: 8px 14px;
+    border-radius: 4px;
+    transition: background 0.2s;
+
+    &:hover {
+      background: rgba(255, 255, 255, 0.12);
+      color: #fff;
+    }
+
+    &.active-link {
+      background: rgba(255, 255, 255, 0.2);
+      color: #fff;
+    }
+  }
+}
+
+.chat-btn {
+  margin-right: 8px;
+}
+
+.user-btn {
+  color: #fff;
+
+  .user-avatar {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    object-fit: cover;
+    margin-right: 8px;
+    background: #fff;
+  }
+}
+
+.content {
+  display: block;
+}

@@ -1,0 +1,52 @@
+<div class="auth-wrapper">
+  <mat-card class="auth-card">
+    <div class="auth-header">
+      <mat-icon color="primary">recycling</mat-icon>
+      <h1>校园二手交易平台</h1>
+      <p>登录账号，开启闲置交易</p>
+    </div>
+
+    <form [formGroup]="form" (ngSubmit)="submit()">
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>用户名</mat-label>
+        <input matInput formControlName="username" placeholder="请输入用户名" />
+        @if (form.controls.username.hasError('required')) {
+          <mat-error>请输入用户名</mat-error>
+        } @else if (form.controls.username.hasError('minlength')) {
+          <mat-error>用户名至少 3 个字符</mat-error>
+        }
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>密码</mat-label>
+        <input
+          matInput
+          formControlName="password"
+          [type]="hidePassword() ? 'password' : 'text'"
+          placeholder="请输入密码"
+        />
+        <mat-icon matIconSuffix (click)="hidePassword.set(!hidePassword())">
+          {{ hidePassword() ? 'visibility_off' : 'visibility' }}
+        </mat-icon>
+        @if (form.controls.password.hasError('required')) {
+          <mat-error>请输入密码</mat-error>
+        } @else if (form.controls.password.hasError('minlength')) {
+          <mat-error>密码至少 6 位</mat-error>
+        }
+      </mat-form-field>
+
+      @if (errorMsg()) {
+        <p class="error-tip">{{ errorMsg() }}</p>
+      }
+
+      <button mat-flat-button color="primary" type="submit" class="full-width" [disabled]="loading()">
+        {{ loading() ? '登录中…' : '登 录' }}
+      </button>
+    </form>
+
+    <p class="auth-switch">
+      还没有账号？
+      <a routerLink="/register">立即注册</a>
+    </p>
+  </mat-card>
+</div>

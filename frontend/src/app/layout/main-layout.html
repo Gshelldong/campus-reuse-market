@@ -1,0 +1,59 @@
+<mat-toolbar color="primary" class="nav-toolbar">
+  <a routerLink="/home" class="brand">
+    <mat-icon>recycling</mat-icon>
+    <span>校园二手</span>
+  </a>
+
+  <nav class="nav-links">
+    <a routerLink="/home" routerLinkActive="active-link">首页</a>
+    @if (currentUser()) {
+      <a routerLink="/publish" routerLinkActive="active-link">发布</a>
+      <a routerLink="/favorite" routerLinkActive="active-link">收藏</a>
+      <a routerLink="/order" routerLinkActive="active-link">订单</a>
+      <a routerLink="/profile" routerLinkActive="active-link">我的</a>
+    }
+    @if (isAdmin()) {
+      <a routerLink="/admin" routerLinkActive="active-link">后台</a>
+    }
+  </nav>
+
+  <span class="toolbar-spacer"></span>
+
+  @if (currentUser(); as user) {
+    <a
+      matIconButton
+      routerLink="/chat"
+      class="chat-btn"
+      matTooltip="我的消息"
+      [matBadge]="unread() > 99 ? '99+' : unread()"
+      [matBadgeHidden]="unread() === 0"
+      matBadgeColor="warn"
+      matBadgeSize="small"
+    >
+      <mat-icon>chat</mat-icon>
+    </a>
+
+    <button mat-button [matMenuTriggerFor]="userMenu" class="user-btn">
+      <img class="user-avatar" [src]="img(user.avatar) || '/avatar-default.svg'" alt="" />
+      <span>{{ user.nickname || user.username }}</span>
+      <mat-icon>arrow_drop_down</mat-icon>
+    </button>
+    <mat-menu #userMenu="matMenu">
+      <button mat-menu-item routerLink="/profile">
+        <mat-icon>person</mat-icon>
+        <span>个人中心</span>
+      </button>
+      <button mat-menu-item (click)="logout()">
+        <mat-icon>logout</mat-icon>
+        <span>退出登录</span>
+      </button>
+    </mat-menu>
+  } @else {
+    <a mat-flat-button routerLink="/login" class="login-btn">登录</a>
+    <a mat-stroked-button routerLink="/register">注册</a>
+  }
+</mat-toolbar>
+
+<main class="content page-full-height">
+  <router-outlet />
+</main>

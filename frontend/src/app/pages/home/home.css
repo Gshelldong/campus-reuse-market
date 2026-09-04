@@ -1,0 +1,40 @@
+.filter-bar {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 12px;
+
+  .search-field {
+    flex: 1;
+  }
+
+  .sort-field {
+    width: 180px;
+  }
+}
+
+.clear-btn {
+  cursor: pointer;
+}
+
+.category-chips {
+  margin-bottom: 16px;
+}
+
+.loading-wrap {
+  display: flex;
+  justify-content: center;
+  padding: 60px 0;
+}
+
+.empty-tip {
+  text-align: center;
+  color: #999;
+  padding: 60px 0;
+
+  mat-icon {
+    font-size: 48px;
+    width: 48px;
+    height: 48px;
+    color: #ccc;
+  }
+}

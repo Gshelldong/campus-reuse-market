@@ -6,6 +6,7 @@ export interface User {
   phone: string;
   role: number;
   create_time: string;
+  status: number;
 }
 
 export interface LoginResponse {

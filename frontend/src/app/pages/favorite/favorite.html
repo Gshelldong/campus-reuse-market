@@ -1,0 +1,51 @@
+<div class="page-container">
+  <h1 class="page-title">我的收藏</h1>
+
+  @if (loading()) {
+    <div class="loading-wrap">
+      <mat-spinner diameter="40"></mat-spinner>
+    </div>
+  } @else if (records().length === 0) {
+    <mat-card class="empty-card">
+      <mat-icon>favorite_border</mat-icon>
+      <p>还没有收藏任何商品</p>
+      <a mat-flat-button color="primary" routerLink="/home">去逛逛</a>
+    </mat-card>
+  } @else {
+    <div class="favorite-list">
+      @for (item of records(); track item.favorite_id) {
+        <mat-card class="favorite-item">
+          <a [routerLink]="['/goods', item.id]" class="item-link">
+            <img class="cover" [src]="img(item.cover_image) || '/goods-default.svg'" [alt]="item.title" />
+            <div class="info">
+              <p class="title" [title]="item.title">{{ item.title }}</p>
+              <div class="tags">
+                <span class="condition">{{ conditionText(item.condition) }}</span>
+                @if (item.status !== 1) {
+                  <span class="status">{{ goodsStatusText(item.status) }}</span>
+                }
+              </div>
+              <div class="price-row">
+                <span class="price">¥{{ item.price }}</span>
+                <span class="time">收藏于 {{ item.favorite_time | date: 'yyyy-MM-dd' }}</span>
+              </div>
+            </div>
+          </a>
+          <button mat-icon-button color="warn" (click)="remove(item.id)" matTooltip="取消收藏">
+            <mat-icon>delete_outline</mat-icon>
+          </button>
+        </mat-card>
+      }
+    </div>
+
+    <mat-paginator
+      [length]="result()?.total ?? 0"
+      [pageIndex]="pageIndex()"
+      [pageSize]="pageSize"
+      [pageSizeOptions]="[12, 24, 48]"
+      (page)="onPageChange($event)"
+      showFirstLastButtons
+    >
+    </mat-paginator>
+  }
+</div>

@@ -1,0 +1,66 @@
+<div class="page-container">
+  <h1 class="page-title">我的订单</h1>
+
+  <mat-tab-group [selectedIndex]="tabIndex()" (selectedIndexChange)="onTabChange($event)">
+    <mat-tab label="全部"></mat-tab>
+    <mat-tab label="我买到的"></mat-tab>
+    <mat-tab label="我卖出的"></mat-tab>
+  </mat-tab-group>
+
+  @if (loading()) {
+    <div class="loading-wrap">
+      <mat-spinner diameter="40"></mat-spinner>
+    </div>
+  } @else if (records().length === 0) {
+    <mat-card class="empty-card">
+      <mat-icon>receipt_long</mat-icon>
+      <p>暂无订单</p>
+      <a mat-flat-button color="primary" routerLink="/home">去逛逛</a>
+    </mat-card>
+  } @else {
+    <div class="order-list">
+      @for (order of records(); track order.id) {
+        <mat-card class="order-item">
+          <a [routerLink]="['/goods', order.goods_id]" class="item-link">
+            <img class="cover" [src]="img(order.goods_cover) || '/goods-default.svg'" [alt]="order.goods_title" />
+            <div class="info">
+              <div class="title-row">
+                <p class="title" [title]="order.goods_title">{{ order.goods_title }}</p>
+                <span class="status" [attr.data-color]="orderStatusColor(order.status)">
+                  {{ orderStatusText(order.status) }}
+                </span>
+              </div>
+              <p class="meta">
+                订单号 {{ order.order_no }}
+                ·
+                @if (order.seller_id === myUserId) {
+                  买家：{{ order.buyer_name }}
+                } @else {
+                  卖家：{{ order.seller_name }}
+                }
+                · {{ order.create_time | date: 'yyyy-MM-dd HH:mm' }}
+              </p>
+              <p class="price">¥{{ order.price }}</p>
+            </div>
+          </a>
+          @if (order.status === 0) {
+            <div class="actions">
+              <button mat-flat-button color="primary" (click)="confirm(order)">确认完成</button>
+              <button mat-stroked-button (click)="cancel(order)">取消订单</button>
+            </div>
+          }
+        </mat-card>
+      }
+    </div>
+
+    <mat-paginator
+      [length]="result()?.total ?? 0"
+      [pageIndex]="pageIndex()"
+      [pageSize]="pageSize"
+      [pageSizeOptions]="[10, 20, 50]"
+      (page)="onPageChange($event)"
+      showFirstLastButtons
+    >
+    </mat-paginator>
+  }
+</div>

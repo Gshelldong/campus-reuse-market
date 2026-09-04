@@ -1,0 +1,240 @@
+<div class="page-container">
+  <h1 class="page-title">管理后台</h1>
+
+  <mat-tab-group [selectedIndex]="tabIndex()" (selectedIndexChange)="onTabChange($event)">
+    <!-- 商品审核 -->
+    <mat-tab label="商品管理">
+      <div class="toolbar-row">
+        <mat-form-field appearance="outline" class="keyword-field" subscriptSizing="dynamic">
+          <mat-label>搜索商品</mat-label>
+          <input matInput [ngModel]="goodsKeyword" (ngModelChange)="onGoodsKeywordInput($event)" placeholder="标题 / 描述关键词" />
+        </mat-form-field>
+        <mat-form-field appearance="outline" class="status-field" subscriptSizing="dynamic">
+          <mat-label>状态</mat-label>
+          <mat-select [(ngModel)]="goodsStatusFilter" (selectionChange)="onGoodsFilterChange()">
+            <mat-option [value]="null">全部状态</mat-option>
+            @for (s of goodsStatusOptions; track s.value) {
+              <mat-option [value]="s.value">{{ s.label }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+      </div>
+
+      @if (goodsLoading()) {
+        <div class="loading-wrap"><mat-spinner diameter="40"></mat-spinner></div>
+      } @else if (goodsRecords().length === 0) {
+        <p class="empty-tip">没有符合条件的商品</p>
+      } @else {
+        <div class="goods-rows">
+          @for (g of goodsRecords(); track g.id) {
+            <mat-card class="goods-row">
+              <a [routerLink]="['/goods', g.id]" class="row-link">
+                <img class="cover" [src]="g.cover_image ? img(g.cover_image) : '/goods-default.svg'" alt="" />
+                <div class="info">
+                  <p class="title">{{ g.title }}</p>
+                  <p class="meta">¥{{ g.price }} · {{ g.nickname || '同学' }} · {{ g.create_time | date: 'yyyy-MM-dd' }}</p>
+                </div>
+              </a>
+              <span class="status" [attr.data-color]="goodsStatusColor(g.status)">
+                {{ goodsStatusText(g.status) }}
+              </span>
+              <div class="actions">
+                @if (g.status === 0) {
+                  <button mat-flat-button color="primary" (click)="audit(g, true)">通过</button>
+                  <button mat-stroked-button color="warn" (click)="audit(g, false)">拒绝</button>
+                } @else if (g.status === 1) {
+                  <button mat-stroked-button color="warn" (click)="offlineGoods(g)">下架</button>
+                }
+              </div>
+            </mat-card>
+          }
+        </div>
+        <mat-paginator
+          [length]="goodsResult()?.total ?? 0"
+          [pageIndex]="goodsPageIndex()"
+          [pageSize]="10"
+          [pageSizeOptions]="[10, 20, 50]"
+          (page)="onGoodsPageChange($event)"
+          showFirstLastButtons
+        ></mat-paginator>
+      }
+    </mat-tab>
+
+    <!-- 用户管理 -->
+    <mat-tab label="用户管理">
+      @if (usersLoading()) {
+        <div class="loading-wrap"><mat-spinner diameter="40"></mat-spinner></div>
+      } @else if (users().length === 0) {
+        <p class="empty-tip">暂无学生用户</p>
+      } @else {
+        <mat-card class="table-card">
+          <table>
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>用户名</th>
+                <th>昵称</th>
+                <th>手机号</th>
+                <th>注册时间</th>
+                <th>状态</th>
+                <th>操作</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (u of users(); track u.id) {
+                <tr>
+                  <td>{{ u.id }}</td>
+                  <td>{{ u.username }}</td>
+                  <td>{{ u.nickname || '-' }}</td>
+                  <td>{{ u.phone || '-' }}</td>
+                  <td>{{ u.create_time | date: 'yyyy-MM-dd' }}</td>
+                  <td>
+                    <span class="status" [attr.data-color]="u.status === 0 ? 'primary' : 'warn'">
+                      {{ u.status === 0 ? '正常' : '已禁用' }}
+                    </span>
+                  </td>
+                  <td>
+                    <button
+                      mat-stroked-button
+                      [color]="u.status === 0 ? 'warn' : 'primary'"
+                      (click)="toggleUserStatus(u)"
+                    >
+                      {{ u.status === 0 ? '禁用' : '恢复' }}
+                    </button>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </mat-card>
+      }
+    </mat-tab>
+
+    <!-- 分类管理 -->
+    <mat-tab label="分类管理">
+      <mat-card class="category-add-card">
+        <div class="category-add-row">
+          <mat-form-field appearance="outline" class="cat-name-field">
+            <mat-label>新分类名称</mat-label>
+            <input matInput [(ngModel)]="newCategoryName" placeholder="如：乐器" maxlength="50" />
+          </mat-form-field>
+          <mat-form-field appearance="outline" class="cat-sort-field">
+            <mat-label>排序号</mat-label>
+            <input matInput type="number" [(ngModel)]="newCategorySort" />
+          </mat-form-field>
+          <button mat-flat-button color="primary" (click)="addCategory()">
+            <mat-icon>add</mat-icon>
+            添加
+          </button>
+        </div>
+      </mat-card>
+
+      <mat-card class="table-card">
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>分类名称</th>
+              <th>排序号</th>
+              <th>操作</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (c of categories(); track c.id) {
+              <tr>
+                <td>{{ c.id }}</td>
+                <td>
+                  @if (editingCategoryId === c.id) {
+                    <input class="edit-input" [(ngModel)]="editingCategoryName" maxlength="50" />
+                  } @else {
+                    {{ c.name }}
+                  }
+                </td>
+                <td>{{ c.sort }}</td>
+                <td>
+                  @if (editingCategoryId === c.id) {
+                    <button mat-flat-button color="primary" (click)="saveCategoryEdit(c)">保存</button>
+                    <button mat-stroked-button (click)="cancelCategoryEdit()">取消</button>
+                  } @else {
+                    <button mat-stroked-button color="primary" (click)="startEditCategory(c)">
+                      <mat-icon>edit</mat-icon>
+                      编辑
+                    </button>
+                    <button mat-stroked-button color="warn" (click)="deleteCategory(c)">
+                      <mat-icon>delete_outline</mat-icon>
+                      删除
+                    </button>
+                  }
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </mat-card>
+    </mat-tab>
+
+    <!-- 订单查看 -->
+    <mat-tab label="订单查看">
+      <div class="toolbar-row">
+        <mat-form-field appearance="outline" class="status-field" subscriptSizing="dynamic">
+          <mat-label>订单状态</mat-label>
+          <mat-select [(ngModel)]="orderStatusFilter" (selectionChange)="onOrderFilterChange()">
+            <mat-option [value]="null">全部状态</mat-option>
+            @for (s of orderStatusOptions; track s.value) {
+              <mat-option [value]="s.value">{{ s.label }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+      </div>
+
+      @if (ordersLoading()) {
+        <div class="loading-wrap"><mat-spinner diameter="40"></mat-spinner></div>
+      } @else if (ordersRecords().length === 0) {
+        <p class="empty-tip">暂无订单</p>
+      } @else {
+        <mat-card class="table-card">
+          <table>
+            <thead>
+              <tr>
+                <th>订单号</th>
+                <th>商品</th>
+                <th>买家</th>
+                <th>卖家</th>
+                <th>价格</th>
+                <th>状态</th>
+                <th>创建时间</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (o of ordersRecords(); track o.id) {
+                <tr>
+                  <td class="order-no">{{ o.order_no }}</td>
+                  <td>
+                    <a [routerLink]="['/goods', o.goods_id]" class="goods-link">{{ o.goods_title }}</a>
+                  </td>
+                  <td>{{ o.buyer_name }}</td>
+                  <td>{{ o.seller_name }}</td>
+                  <td>¥{{ o.price }}</td>
+                  <td>
+                    <span class="status" [attr.data-color]="orderStatusColor(o.status)">
+                      {{ orderStatusText(o.status) }}
+                    </span>
+                  </td>
+                  <td>{{ o.create_time | date: 'yyyy-MM-dd HH:mm' }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </mat-card>
+        <mat-paginator
+          [length]="ordersResult()?.total ?? 0"
+          [pageIndex]="ordersPageIndex()"
+          [pageSize]="10"
+          [pageSizeOptions]="[10, 20, 50]"
+          (page)="onOrdersPageChange($event)"
+          showFirstLastButtons
+        ></mat-paginator>
+      }
+    </mat-tab>
+  </mat-tab-group>
+</div>

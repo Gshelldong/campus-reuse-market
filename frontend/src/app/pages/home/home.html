@@ -1,0 +1,67 @@
+<div class="page-container">
+  <div class="filter-bar">
+    <mat-form-field appearance="outline" class="search-field" subscriptSizing="dynamic">
+      <mat-label>搜索闲置</mat-label>
+      <input
+        matInput
+        [ngModel]="keyword"
+        (ngModelChange)="onSearchInput($event)"
+        placeholder="输入关键词，如：自行车、考研书…"
+      />
+      <mat-icon matIconSuffix (click)="clearKeyword()" class="clear-btn">close</mat-icon>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="sort-field" subscriptSizing="dynamic">
+      <mat-label>排序</mat-label>
+      <mat-select [(ngModel)]="orderBy" (selectionChange)="onOrderByChange()">
+        <mat-option value="">最新发布</mat-option>
+        <mat-option value="price_asc">价格从低到高</mat-option>
+        <mat-option value="price_desc">价格从高到低</mat-option>
+      </mat-select>
+    </mat-form-field>
+  </div>
+
+  <mat-chip-set class="category-chips" aria-label="商品分类">
+    <mat-chip-option
+      [selected]="selectedCategoryId === null"
+      (selectionChange)="onChipSelect(null, $event)"
+    >
+      全部
+    </mat-chip-option>
+    @for (cat of categories(); track cat.id) {
+      <mat-chip-option
+        [selected]="selectedCategoryId === cat.id"
+        (selectionChange)="onChipSelect(cat.id, $event)"
+      >
+        {{ cat.name }}
+      </mat-chip-option>
+    }
+  </mat-chip-set>
+
+  @if (loading()) {
+    <div class="loading-wrap">
+      <mat-spinner diameter="40"></mat-spinner>
+    </div>
+  } @else if (records().length === 0) {
+    <div class="empty-tip">
+      <mat-icon>search_off</mat-icon>
+      <p>没有找到相关闲置，换个关键词试试～</p>
+    </div>
+  } @else {
+    <div class="goods-grid">
+      @for (item of records(); track item.id) {
+        <app-goods-card [goods]="item" />
+      }
+    </div>
+
+    <mat-paginator
+      [length]="result()?.total ?? 0"
+      [pageIndex]="pageIndex"
+      [pageSize]="pageSize"
+      [pageSizeOptions]="[12, 24, 48]"
+      (page)="onPageChange($event)"
+      showFirstLastButtons
+    >
+    </mat-paginator>
+  }
+</div>

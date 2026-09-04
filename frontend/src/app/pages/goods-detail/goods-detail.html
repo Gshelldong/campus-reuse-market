@@ -1,0 +1,102 @@
+<div class="page-container">
+  @if (loading()) {
+    <div class="loading-wrap">
+      <mat-spinner diameter="40"></mat-spinner>
+    </div>
+  } @else if (goods(); as g) {
+    <div class="detail-layout">
+      <!-- 左侧：图片 -->
+      <mat-card class="gallery-card">
+        <div class="main-image">
+          <img [src]="currentImage()" [alt]="g.title" />
+          @if (images().length > 1) {
+            <button mat-mini-fab color="primary" class="nav-btn prev" (click)="prevImage()">
+              <mat-icon>chevron_left</mat-icon>
+            </button>
+            <button mat-mini-fab color="primary" class="nav-btn next" (click)="nextImage()">
+              <mat-icon>chevron_right</mat-icon>
+            </button>
+          }
+        </div>
+        @if (images().length > 1) {
+          <div class="thumbs">
+            @for (image of images(); track image.id; let i = $index) {
+              <img
+                [src]="img(image.image_url)"
+                [class.active]="i === currentImageIndex()"
+                (click)="selectImage(i)"
+                alt=""
+              />
+            }
+          </div>
+        }
+      </mat-card>
+
+      <!-- 右侧：信息与操作 -->
+      <mat-card class="info-card">
+        <div class="title-row">
+          <h1>{{ g.title }}</h1>
+          @if (!isOnSale()) {
+            <span class="status-chip">{{ goodsStatusText(g.status) }}</span>
+          }
+        </div>
+
+        <div class="price-row">
+          <span class="price">¥{{ g.price }}</span>
+          @if (g.original_price) {
+            <span class="original-price">原价 ¥{{ g.original_price }}</span>
+          }
+        </div>
+
+        <div class="meta-list">
+          <div class="meta-item">
+            <span class="label">成色</span>
+            <span>{{ conditionText(g.condition) }}</span>
+          </div>
+          <div class="meta-item">
+            <span class="label">分类</span>
+            <span>{{ categoryName() || '未分类' }}</span>
+          </div>
+          <div class="meta-item">
+            <span class="label">发布时间</span>
+            <span>{{ g.create_time | date: 'yyyy-MM-dd HH:mm' }}</span>
+          </div>
+        </div>
+
+        <div class="action-row">
+          @if (isMine()) {
+            <span class="mine-tip">这是您发布的商品</span>
+            <a mat-stroked-button color="primary" [routerLink]="['/publish']" [queryParams]="{ id: g.id }">
+              <mat-icon>edit</mat-icon>
+              编辑
+            </a>
+          } @else {
+            <button
+              mat-flat-button
+              color="primary"
+              (click)="buy()"
+              [disabled]="!isOnSale()"
+            >
+              <mat-icon>shopping_cart</mat-icon>
+              {{ isOnSale() ? '立即下单' : goodsStatusText(g.status) }}
+            </button>
+            <button mat-stroked-button color="primary" (click)="contactSeller()">
+              <mat-icon>chat</mat-icon>
+              联系卖家
+            </button>
+            <button mat-stroked-button (click)="toggleFavorite()">
+              <mat-icon>{{ favorited() ? 'favorite' : 'favorite_border' }}</mat-icon>
+              {{ favorited() ? '已收藏' : '收藏' }}
+            </button>
+          }
+        </div>
+      </mat-card>
+    </div>
+
+    <!-- 描述 -->
+    <mat-card class="desc-card">
+      <h2>商品描述</h2>
+      <p class="desc">{{ g.description || '卖家没有填写描述～' }}</p>
+    </mat-card>
+  }
+</div>
