@@ -1,86 +1,111 @@
-<div class="auth-wrapper">
-  <mat-card class="auth-card">
+<div class="auth-page">
+  <!-- 背景光晕 -->
+  <span class="glow glow-a"></span>
+  <span class="glow glow-b"></span>
+
+  <!-- 左侧品牌区 -->
+  <div class="brand">
+    <a routerLink="/home" class="brand-logo" title="回到首页">
+      <img src="img.png" alt="logo" />
+    </a>
+    <h2>校园二手交易平台</h2>
+    <p>加入校园二手，让闲置流动起来。好物流转，校园共享。</p>
+  </div>
+
+  <!-- 右侧注册卡片 -->
+  <div class="auth-glass">
     <div class="auth-header">
-      <mat-icon color="primary">person_add</mat-icon>
-      <h1>注册账号</h1>
-      <p>加入校园二手，让闲置流动起来</p>
+      <h1>创建账号</h1>
+      <p>注册后即可发布和交易闲置好物</p>
     </div>
 
-    <form [formGroup]="form" (ngSubmit)="submit()">
-      <mat-form-field appearance="outline" class="full-width">
-        <mat-label>用户名</mat-label>
-        <input matInput formControlName="username" placeholder="3-50 个字符" />
-        @if (form.controls.username.hasError('required')) {
-          <mat-error>请输入用户名</mat-error>
-        } @else if (form.controls.username.hasError('minlength')) {
-          <mat-error>用户名至少 3 个字符</mat-error>
+    <form [formGroup]="form" (ngSubmit)="submit()" class="auth-form">
+      <div class="form-field">
+        <label class="field-label">用户名</label>
+        <input
+          nz-input
+          class="apple-input"
+          formControlName="username"
+          placeholder="3-50 个字符"
+          autocomplete="username"
+        />
+        @if (form.controls.username.hasError('required') && form.controls.username.touched) {
+          <p class="field-error">请输入用户名</p>
+        } @else if (form.controls.username.hasError('minlength') && form.controls.username.touched) {
+          <p class="field-error">用户名至少 3 个字符</p>
         }
-      </mat-form-field>
+      </div>
 
-      <mat-form-field appearance="outline" class="full-width">
-        <mat-label>昵称（选填）</mat-label>
-        <input matInput formControlName="nickname" placeholder="展示给其他用户的昵称" />
+      <div class="form-field">
+        <label class="field-label">昵称（选填）</label>
+        <input nz-input class="apple-input" formControlName="nickname" placeholder="展示给其他用户的昵称" />
         @if (form.controls.nickname.hasError('maxlength')) {
-          <mat-error>昵称最多 50 个字符</mat-error>
+          <p class="field-error">昵称最多 50 个字符</p>
         }
-      </mat-form-field>
+      </div>
 
-      <mat-form-field appearance="outline" class="full-width">
-        <mat-label>手机号（选填）</mat-label>
-        <input matInput formControlName="phone" placeholder="11 位手机号" />
-        @if (form.controls.phone.hasError('pattern')) {
-          <mat-error>手机号格式不正确</mat-error>
+      <div class="form-field">
+        <label class="field-label">手机号（选填）</label>
+        <input nz-input class="apple-input" formControlName="phone" placeholder="11 位手机号" />
+        @if (form.controls.phone.hasError('pattern') && form.controls.phone.touched) {
+          <p class="field-error">手机号格式不正确</p>
         }
-      </mat-form-field>
+      </div>
 
-      <mat-form-field appearance="outline" class="full-width">
-        <mat-label>密码</mat-label>
+      <div class="form-field">
+        <label class="field-label">密码</label>
+        <div class="pwd-wrap">
+          <input
+            nz-input
+            class="apple-input"
+            [type]="hidePassword() ? 'password' : 'text'"
+            formControlName="password"
+            placeholder="至少 6 位"
+            autocomplete="new-password"
+          />
+          <span
+            class="pwd-toggle"
+            (click)="hidePassword.set(!hidePassword())"
+            nz-icon
+            [nzType]="hidePassword() ? 'eye-invisible' : 'eye'"
+          ></span>
+        </div>
+        @if (form.controls.password.hasError('required') && form.controls.password.touched) {
+          <p class="field-error">请输入密码</p>
+        } @else if (form.controls.password.hasError('minlength') && form.controls.password.touched) {
+          <p class="field-error">密码至少 6 位</p>
+        }
+      </div>
+
+      <div class="form-field">
+        <label class="field-label">确认密码</label>
         <input
-          matInput
-          formControlName="password"
+          nz-input
+          class="apple-input"
           [type]="hidePassword() ? 'password' : 'text'"
-          placeholder="至少 6 位"
-        />
-        <mat-icon matIconSuffix (click)="hidePassword.set(!hidePassword())">
-          {{ hidePassword() ? 'visibility_off' : 'visibility' }}
-        </mat-icon>
-        @if (form.controls.password.hasError('required')) {
-          <mat-error>请输入密码</mat-error>
-        } @else if (form.controls.password.hasError('minlength')) {
-          <mat-error>密码至少 6 位</mat-error>
-        }
-      </mat-form-field>
-
-      <mat-form-field appearance="outline" class="full-width">
-        <mat-label>确认密码</mat-label>
-        <input
-          matInput
           formControlName="confirmPassword"
-          [type]="hidePassword() ? 'password' : 'text'"
           placeholder="再次输入密码"
+          autocomplete="new-password"
         />
-        @if (form.controls.confirmPassword.hasError('required')) {
-          <mat-error>请再次输入密码</mat-error>
+        @if (form.controls.confirmPassword.hasError('required') && form.controls.confirmPassword.touched) {
+          <p class="field-error">请再次输入密码</p>
         }
-      </mat-form-field>
+      </div>
 
       @if (errorMsg()) {
         <p class="error-tip">{{ errorMsg() }}</p>
       }
 
-      <div class="button-row">
-        <button mat-flat-button color="primary" type="submit" class="full-width" [disabled]="loading()">
-          {{ loading() ? '注册中…' : '注 册' }}
-        </button>
-        <button mat-stroked-button routerLink="/home" class="full-width cancel-btn">
-          取 消
-        </button>
-      </div>
+      <button class="auth-btn" type="submit" [disabled]="loading()">
+        {{ loading() ? '注册中…' : '注 册' }}
+      </button>
+
+      <button class="cancel-btn" type="button" routerLink="/home">取 消</button>
     </form>
 
     <p class="auth-switch">
       已有账号？
-      <a routerLink="/login">直接登录</a>
+      <a routerLink="/login" class="link">直接登录</a>
     </p>
-  </mat-card>
+  </div>
 </div>

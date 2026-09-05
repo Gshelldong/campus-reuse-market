@@ -1,34 +1,24 @@
 import { Component, inject, signal } from '@angular/core';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { MatCardModule } from '@angular/material/card';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
-import { MatButtonModule } from '@angular/material/button';
-import { MatIconModule } from '@angular/material/icon';
-import { MatSnackBar } from '@angular/material/snack-bar';
+import { NzInputModule } from 'ng-zorro-antd/input';
+import { NzButtonModule } from 'ng-zorro-antd/button';
+import { NzIconModule } from 'ng-zorro-antd/icon';
+import { NzMessageService } from 'ng-zorro-antd/message';
 import { Router, RouterLink } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { AuthService } from '../../core/services/auth.service';
 
 @Component({
   selector: 'app-register',
-  imports: [
-    ReactiveFormsModule,
-    MatCardModule,
-    MatFormFieldModule,
-    MatInputModule,
-    MatButtonModule,
-    MatIconModule,
-    RouterLink,
-  ],
+  imports: [ReactiveFormsModule, NzInputModule, NzButtonModule, NzIconModule, RouterLink],
   templateUrl: './register.html',
-  styleUrl: './login.css',
+  styleUrl: './register.css',
 })
 export class RegisterPage {
   private fb = inject(NonNullableFormBuilder);
   private auth = inject(AuthService);
   private router = inject(Router);
-  private snackBar = inject(MatSnackBar);
+  private message = inject(NzMessageService);
 
   readonly hidePassword = signal(true);
   readonly errorMsg = signal('');
@@ -56,7 +46,7 @@ export class RegisterPage {
     this.loading.set(true);
     this.auth.register({ username, password, nickname, phone }).subscribe({
       next: () => {
-        this.snackBar.open('注册成功，请登录', '知道了', { duration: 2500 });
+        this.message.success('注册成功，请登录');
         this.router.navigate(['/login']);
       },
       error: (err: HttpErrorResponse) => {
