@@ -1,282 +1,107 @@
-.admin-container {
-  max-width: 1200px;
-  margin: 0 auto;
-  background: white;
-  border-radius: 16px;
+/* ===== 管理后台 Apple 风格 ===== */
+
+.admin-card {
+  background: var(--color-card);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
   padding: 24px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.12);
+  margin-top: 16px;
 }
 
-.page-title {
-  font-size: 24px;
-  margin: 8px 0 20px;
-  color: #1e293b;
-  font-weight: 600;
-}
-
-.toolbar-row {
-  display: flex;
-  gap: 16px;
-  margin: 20px 0;
-  padding: 16px;
-  background: #f8fafc;
-  border-radius: 12px;
-
-  .keyword-field {
-    flex: 1;
-  }
-
-  .status-field {
-    width: 180px;
-  }
-}
-
-.loading-wrap {
-  display: flex;
-  justify-content: center;
-  padding: 60px 0;
-}
-
-.empty-tip {
+.admin-empty {
   text-align: center;
-  color: #64748b;
-  padding: 60px 0;
-  background: #f8fafc;
-  border-radius: 12px;
-  font-size: 16px;
+  color: var(--color-text-tertiary);
+  padding: 56px 0;
+  font-size: 15px;
 }
 
-.goods-audit {
-  margin-top: 24px;
-}
-
-.goods-rows {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
+/* 商品行 */
 .goods-row {
   display: flex;
   align-items: center;
   gap: 16px;
-  padding: 14px 16px 14px 0;
-  background: #f8fafc;
-  border-radius: 12px;
-  transition: background 0.2s;
-
-  &:hover {
-    background: #f1f5f9;
-  }
-
-  .row-link {
-    display: flex;
-    align-items: center;
-    gap: 16px;
-    flex: 1;
-    min-width: 0;
-    text-decoration: none;
-    color: inherit;
-  }
-
-  .cover {
-    width: 72px;
-    height: 54px;
-    object-fit: cover;
-    border-radius: 8px;
-    background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
-    flex-shrink: 0;
-  }
-
-  .info {
-    min-width: 0;
-
-    .title {
-      margin: 0 0 6px;
-      font-size: 15px;
-      color: #1e293b;
-      font-weight: 500;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
-    .meta {
-      margin: 0;
-      color: #64748b;
-      font-size: 13px;
-    }
-  }
-
-  .status {
-    font-size: 13px;
-    padding: 4px 12px;
-    border-radius: 20px;
-    background: #f1f5f9;
-    color: #475569;
-    font-weight: 500;
-    white-space: nowrap;
-
-    &[data-color='primary'] {
-      background: #dbeafe;
-      color: #1e40af;
-    }
-
-    &[data-color='accent'] {
-      background: #fef3c7;
-      color: #92400e;
-    }
-
-    &[data-color='warn'] {
-      background: #fee2e2;
-      color: #dc2626;
-    }
-  }
-
-  .actions {
-    display: flex;
-    gap: 8px;
-    flex-shrink: 0;
-
-    button {
-      border-radius: 6px;
-      transition: all 0.2s;
-
-      &:hover {
-        transform: translateY(-1px);
-      }
-    }
-  }
+  padding: 12px 16px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+  transition: all 0.25s ease;
 }
 
-.status {
-  font-size: 13px;
-  padding: 4px 12px;
-  border-radius: 20px;
-  background: #f1f5f9;
-  color: #475569;
-  font-weight: 500;
-  white-space: nowrap;
-
-  &[data-color='primary'] {
-    background: #dbeafe;
-    color: #1e40af;
-  }
-
-  &[data-color='accent'] {
-    background: #fef3c7;
-    color: #92400e;
-  }
-
-  &[data-color='warn'] {
-    background: #fee2e2;
-    color: #dc2626;
-  }
+.goods-row:hover {
+  border-color: rgba(0, 113, 227, 0.35);
+  box-shadow: var(--shadow-sm);
 }
 
-.table-card {
-  margin-top: 28px;
+/* ===== 通用表格 ===== */
+.table-wrap {
   overflow-x: auto;
-  background: #f8fafc;
-  border-radius: 12px;
-  padding: 4px;
-
-  table {
-    border-collapse: collapse;
-    width: 100%;
-
-    th,
-    td {
-      padding: 14px 16px;
-      text-align: left;
-      font-size: 14px;
-      white-space: nowrap;
-    }
-
-    th {
-      color: #64748b;
-      font-weight: 600;
-      border-bottom: 2px solid #e2e8f0;
-      background: #f1f5f9;
-    }
-
-    tr:not(:last-child) td {
-      border-bottom: 1px solid #e2e8f0;
-    }
-
-    tr:hover {
-      background: #f1f5f9;
-    }
-
-    .order-no {
-      font-family: monospace;
-      font-size: 13px;
-      color: #475569;
-    }
-
-    .goods-link {
-      color: #3b82f6;
-      text-decoration: none;
-      font-weight: 500;
-
-      &:hover {
-        text-decoration: underline;
-      }
-    }
-
-    .edit-input {
-      border: 1px solid #cbd5e1;
-      border-radius: 6px;
-      padding: 8px 12px;
-      font-size: 14px;
-      outline: none;
-      transition: border-color 0.2s;
-
-      &:focus {
-        border-color: #3b82f6;
-        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-      }
-    }
-
-    td button + button {
-      margin-left: 8px;
-    }
-
-    button {
-      border-radius: 6px;
-    }
-  }
 }
 
-.category-add-card {
-  margin-top: 28px;
-  background: #f8fafc;
-  padding: 20px;
-  border-radius: 12px;
+.admin-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
 }
 
-.category-add-row {
-  display: flex;
-  gap: 16px;
-  align-items: center;
+.admin-table th {
+  text-align: left;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  background: var(--color-bg-secondary);
+  padding: 12px 16px;
+  white-space: nowrap;
+}
 
-  .cat-name-field {
-    flex: 1;
-  }
+.admin-table th:first-child {
+  border-radius: 10px 0 0 10px;
+}
 
-  .cat-sort-field {
-    width: 130px;
-  }
+.admin-table th:last-child {
+  border-radius: 0 10px 10px 0;
+}
 
-  button {
-    flex-shrink: 0;
-    border-radius: 8px;
-    height: 44px;
-    transition: all 0.2s;
+.admin-table td {
+  padding: 13px 16px;
+  color: var(--color-text);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.04);
+  white-space: nowrap;
+}
 
-    &:hover {
-      transform: translateY(-1px);
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-    }
-  }
+.admin-table tbody tr {
+  transition: background 0.2s ease;
+}
+
+.admin-table tbody tr:hover {
+  background: rgba(0, 113, 227, 0.03);
+}
+
+.order-no {
+  font-family: ui-monospace, 'SF Mono', Menlo, monospace;
+  font-size: 13px;
+  color: var(--color-text-secondary);
+}
+
+.goods-link {
+  color: var(--color-primary);
+  font-weight: 500;
+}
+
+.goods-link:hover {
+  opacity: 0.78;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* ===== nz-tabs 样式贴合 Apple 风 ===== */
+::ng-deep .admin-tabs .ant-tabs-tab {
+  font-size: 15px;
+  padding: 12px 4px;
+}
+
+::ng-deep .admin-tabs .ant-tabs-tab-active .ant-tabs-tab-btn {
+  color: var(--color-primary) !important;
+  font-weight: 600;
+}
+
+::ng-deep .admin-tabs .ant-tabs-ink-bar {
+  background: var(--color-primary);
 }

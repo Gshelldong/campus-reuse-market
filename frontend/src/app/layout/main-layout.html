@@ -37,7 +37,7 @@
 
       <button class="publish-btn" (click)="onPublishClick()">
         <span nz-icon nzType="plus" class="text-[13px]"></span>
-        <span>+ 发布</span>
+        <span>发布</span>
       </button>
 
       @if (currentUser(); as user) {
@@ -118,6 +118,12 @@
       <span nz-icon nzType="user" class="mr-2"></span>
       <span>个人中心</span>
     </li>
+    @if (isAdmin()) {
+      <li nz-menu-item routerLink="/admin">
+        <span nz-icon nzType="setting" class="mr-2"></span>
+        <span>平台管理</span>
+      </li>
+    }
     <li nz-menu-item (click)="logout()">
       <span nz-icon nzType="logout" class="mr-2"></span>
       <span>退出登录</span>

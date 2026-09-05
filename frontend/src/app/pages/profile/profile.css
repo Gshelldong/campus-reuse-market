@@ -1,249 +1,154 @@
-.profile-container {
-  max-width: 900px;
-  margin: 0 auto;
-  background: white;
-  border-radius: 16px;
-  padding: 24px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.12);
-}
+/* ===== 个人中心 Apple 风格 ===== */
 
+/* 用户信息头部 */
 .user-header {
   display: flex;
   align-items: center;
-  gap: 24px;
-  margin-bottom: 28px;
-  padding-bottom: 24px;
-  border-bottom: 1px solid #f1f5f9;
+  gap: 20px;
+  background: var(--color-card);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  padding: 24px;
+  margin-bottom: 16px;
 }
 
+/* 头像（可点击上传） */
 .avatar-wrap {
   position: relative;
-  width: 88px;
-  height: 88px;
-  border-radius: 50%;
   cursor: pointer;
   flex-shrink: 0;
-
-  .avatar {
-    width: 88px;
-    height: 88px;
-    border-radius: 50%;
-    object-fit: cover;
-    background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
-    display: block;
-    border: 3px solid #f1f5f9;
-  }
-
-  .avatar-mask {
-    position: absolute;
-    inset: 0;
-    border-radius: 50%;
-    background: rgba(0, 0, 0, 0.5);
-    backdrop-filter: blur(2px);
-    color: #fff;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 2px;
-    opacity: 0;
-    transition: opacity 0.2s;
-    font-size: 12px;
-
-    &.uploading {
-      opacity: 1;
-    }
-
-    mat-icon {
-      font-size: 24px;
-      width: 24px;
-      height: 24px;
-    }
-  }
-
-  &:hover .avatar-mask {
-    opacity: 1;
-  }
+  display: inline-block;
 }
 
-.user-info {
-  flex: 1;
-
-  h1 {
-    margin: 0 0 6px;
-    font-size: 24px;
-    color: #1e293b;
-    font-weight: 600;
-  }
-
-  p {
-    margin: 0;
-    color: #64748b;
-    font-size: 14px;
-  }
+.avatar {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  object-fit: cover;
+  display: block;
+  box-shadow: 0 0 0 3px #fff, 0 2px 12px rgba(0, 0, 0, 0.1);
 }
 
-.tab-card {
-  margin-top: 24px;
-}
-
-.tab-form {
+.avatar-mask {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.4);
+  color: #fff;
   display: flex;
-  flex-direction: column;
-  max-width: 420px;
-  padding: 12px 0;
-
-  mat-form-field {
-    width: 100%;
-    margin-bottom: 16px;
-  }
-
-  button {
-    align-self: flex-start;
-    border-radius: 8px;
-    padding: 0 24px;
-    height: 44px;
-    transition: all 0.2s;
-
-    &:hover {
-      transform: translateY(-1px);
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-    }
-  }
-}
-
-.loading-wrap {
-  display: flex;
-  justify-content: center;
-  padding: 60px 0;
-}
-
-.empty-card {
-  display: flex;
-  flex-direction: column;
   align-items: center;
-  gap: 16px;
-  padding: 60px 0;
-  background: #f8fafc;
-  border-radius: 12px;
-
-  mat-icon {
-    font-size: 64px;
-    width: 64px;
-    height: 64px;
-    color: #cbd5e1;
-  }
-
-  p {
-    color: #64748b;
-    margin: 0;
-    font-size: 16px;
-  }
-
-  button {
-    margin-top: 8px;
-    border-radius: 8px;
-    transition: all 0.2s;
-
-    &:hover {
-      transform: translateY(-1px);
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-    }
-  }
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.25s ease;
 }
 
-.goods-manage {
-  margin-top: 24px;
+.avatar-wrap:hover .avatar-mask {
+  opacity: 1;
 }
 
-.goods-table {
+.avatar-mask.uploading {
+  opacity: 1;
+}
+
+/* 头部右侧发布按钮（复用导航栏胶囊样式） */
+.publish-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  height: 36px;
+  padding: 0 18px;
+  border: none;
+  border-radius: 980px;
+  background: var(--color-primary);
+  color: #fff;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.publish-btn:hover {
+  background: var(--color-primary-hover);
+  transform: scale(1.02);
+}
+
+/* Tab 面板卡片 */
+.tab-card {
+  background: var(--color-card);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  padding: 28px;
+  margin-top: 16px;
+}
+
+/* 表单 */
+.tab-form {
+  max-width: 400px;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 18px;
 }
 
+.form-field {
+  display: flex;
+  flex-direction: column;
+}
+
+.field-label {
+  font-size: 13px;
+  margin-bottom: 6px;
+  color: var(--color-text-secondary);
+}
+
+.field-error {
+  font-size: 12px;
+  margin-top: 5px;
+  color: var(--color-danger);
+}
+
+.form-submit {
+  margin-top: 6px;
+  align-self: flex-start;
+  padding: 10px 32px;
+}
+
+/* 我的发布：商品行 */
 .goods-row {
   display: flex;
   align-items: center;
   gap: 16px;
-  padding: 12px 16px 12px 0;
-  background: #f8fafc;
-  border-radius: 12px;
-  transition: background 0.2s;
-
-  &:hover {
-    background: #f1f5f9;
-  }
-
-  .row-link {
-    display: flex;
-    align-items: center;
-    gap: 16px;
-    flex: 1;
-    min-width: 0;
-    text-decoration: none;
-    color: inherit;
-  }
-
-  .cover {
-    width: 80px;
-    height: 60px;
-    object-fit: cover;
-    border-radius: 8px;
-    background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
-    flex-shrink: 0;
-  }
-
-  .info {
-    min-width: 0;
-
-    .title {
-      margin: 0 0 6px;
-      font-size: 15px;
-      color: #1e293b;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      font-weight: 500;
-    }
-
-    .price {
-      margin: 0;
-      color: #ef4444;
-      font-weight: 600;
-      font-size: 15px;
-    }
-  }
-
-  .status {
-    font-size: 13px;
-    padding: 4px 12px;
-    border-radius: 20px;
-    font-weight: 500;
-    white-space: nowrap;
-
-    &[data-color='primary'] {
-      background: #dbeafe;
-      color: #1e40af;
-    }
-
-    &[data-color='accent'] {
-      background: #dcfce7;
-      color: #166534;
-    }
-
-    &[data-color='warn'] {
-      background: #fef3c7;
-      color: #92400e;
-    }
-  }
-
-  .actions {
-    display: flex;
-    gap: 4px;
-  }
+  padding: 12px 16px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+  transition: all 0.25s ease;
 }
 
-.password-form {
-  padding-top: 12px;
+.goods-row:hover {
+  border-color: rgba(0, 113, 227, 0.35);
+  box-shadow: var(--shadow-sm);
+}
+
+/* 空状态 */
+.empty-card {
+  text-align: center;
+  padding: 56px 0;
+}
+
+/* nz-tabs 样式贴合 Apple 风 */
+::ng-deep .profile-tabs .ant-tabs-tab {
+  font-size: 15px;
+  padding: 12px 4px;
+}
+
+::ng-deep .profile-tabs .ant-tabs-tab-active .ant-tabs-tab-btn {
+  color: var(--color-primary) !important;
+  font-weight: 600;
+}
+
+::ng-deep .profile-tabs .ant-tabs-ink-bar {
+  background: var(--color-primary);
 }

@@ -23,6 +23,13 @@ import {
   LeftOutline,
   RightOutline,
   EllipsisOutline,
+  SettingOutline,
+  EditOutline,
+  DeleteOutline,
+  CameraOutline,
+  LoadingOutline,
+  InboxOutline,
+  CloudDownloadOutline,
 } from '@ant-design/icons-angular/icons';
 
 registerLocaleData(zh);
@@ -48,6 +55,13 @@ export const appConfig: ApplicationConfig = {
       LeftOutline,
       RightOutline,
       EllipsisOutline,
+      SettingOutline,
+      EditOutline,
+      DeleteOutline,
+      CameraOutline,
+      LoadingOutline,
+      InboxOutline,
+      CloudDownloadOutline,
     ]),
     provideHttpClient(withInterceptors([authInterceptor])),
   ],

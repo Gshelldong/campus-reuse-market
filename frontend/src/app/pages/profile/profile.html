@@ -1,145 +1,175 @@
-<div class="page-container">
-  @if (currentUser(); as user) {
-    <!-- 用户信息头部 -->
-    <mat-card class="user-header">
-      <label class="avatar-wrap">
-        <input type="file" accept="image/*" hidden (change)="onAvatarSelected($event)" />
-        <img class="avatar" [src]="img(user.avatar) || '/avatar-default.svg'" alt="" />
-        <span class="avatar-mask" [class.uploading]="avatarUploading()">
-          <mat-icon>{{ avatarUploading() ? 'hourglass_empty' : 'photo_camera' }}</mat-icon>
-        </span>
-      </label>
-      <div class="user-info">
-        <h1>{{ user.nickname || user.username }}</h1>
-        <p>用户名：{{ user.username }} · 注册于 {{ user.create_time | date: 'yyyy-MM-dd' }}</p>
-      </div>
-      <a mat-flat-button color="primary" routerLink="/publish">
-        <mat-icon>add</mat-icon>
-        发布闲置
-      </a>
-    </mat-card>
-
-    <mat-tab-group [selectedIndex]="tabIndex()" (selectedIndexChange)="onTabChange($event)">
-      <!-- 个人信息 -->
-      <mat-tab label="个人信息">
-        <mat-card class="tab-card">
-          <form [formGroup]="profileForm" (ngSubmit)="saveProfile()" class="tab-form">
-            <mat-form-field appearance="outline">
-              <mat-label>昵称</mat-label>
-              <input matInput formControlName="nickname" placeholder="展示昵称" />
-              @if (profileForm.controls.nickname.hasError('maxlength')) {
-                <mat-error>昵称最多 50 个字符</mat-error>
-              }
-            </mat-form-field>
-
-            <mat-form-field appearance="outline">
-              <mat-label>手机号</mat-label>
-              <input matInput formControlName="phone" placeholder="11 位手机号" />
-              @if (profileForm.controls.phone.hasError('pattern')) {
-                <mat-error>手机号格式不正确</mat-error>
-              }
-            </mat-form-field>
-
-            <button mat-flat-button color="primary" type="submit" [disabled]="savingProfile()">
-              {{ savingProfile() ? '保存中…' : '保存修改' }}
-            </button>
-          </form>
-        </mat-card>
-      </mat-tab>
-
-      <!-- 修改密码 -->
-      <mat-tab label="修改密码">
-        <mat-card class="tab-card">
-          <form [formGroup]="passwordForm" (ngSubmit)="savePassword()" class="tab-form">
-            <mat-form-field appearance="outline">
-              <mat-label>原密码</mat-label>
-              <input matInput type="password" formControlName="oldPassword" />
-              @if (passwordForm.controls.oldPassword.hasError('required')) {
-                <mat-error>请输入原密码</mat-error>
-              }
-            </mat-form-field>
-
-            <mat-form-field appearance="outline">
-              <mat-label>新密码</mat-label>
-              <input matInput type="password" formControlName="newPassword" placeholder="至少 6 位" />
-              @if (passwordForm.controls.newPassword.hasError('required')) {
-                <mat-error>请输入新密码</mat-error>
-              } @else if (passwordForm.controls.newPassword.hasError('minlength')) {
-                <mat-error>密码至少 6 位</mat-error>
-              }
-            </mat-form-field>
-
-            <mat-form-field appearance="outline">
-              <mat-label>确认新密码</mat-label>
-              <input matInput type="password" formControlName="confirmPassword" />
-              @if (passwordForm.controls.confirmPassword.hasError('required')) {
-                <mat-error>请再次输入新密码</mat-error>
-              }
-            </mat-form-field>
-
-            <button mat-flat-button color="primary" type="submit" [disabled]="savingPassword()">
-              {{ savingPassword() ? '提交中…' : '修改密码' }}
-            </button>
-          </form>
-        </mat-card>
-      </mat-tab>
-
-      <!-- 我的发布 -->
-      <mat-tab label="我的发布">
-        <div class="goods-manage">
-          @if (goodsLoading()) {
-            <div class="loading-wrap">
-              <mat-spinner diameter="40"></mat-spinner>
-            </div>
-          } @else if (goodsRecords().length === 0) {
-            <mat-card class="empty-card">
-              <mat-icon>inventory_2</mat-icon>
-              <p>还没有发布过闲置</p>
-              <a mat-flat-button color="primary" routerLink="/publish">去发布</a>
-            </mat-card>
-          } @else {
-            <div class="goods-table">
-              @for (g of goodsRecords(); track g.id) {
-                <mat-card class="goods-row">
-                  <a [routerLink]="['/goods', g.id]" class="row-link">
-                    <img class="cover" [src]="g.cover_image ? img(g.cover_image) : '/goods-default.svg'" alt="" />
-                    <div class="info">
-                      <p class="title">{{ g.title }}</p>
-                      <p class="price">¥{{ g.price }}</p>
-                    </div>
-                  </a>
-                  <span class="status" [attr.data-color]="goodsStatusColor(g.status)">
-                    {{ goodsStatusText(g.status) }}
-                  </span>
-                  <div class="actions">
-                    <a mat-icon-button color="primary" [routerLink]="['/publish']" [queryParams]="{ id: g.id }" matTooltip="编辑">
-                      <mat-icon>edit</mat-icon>
-                    </a>
-                    @if (g.status === 1) {
-                      <button mat-icon-button (click)="offlineGoods(g)" matTooltip="下架">
-                        <mat-icon>cloud_download</mat-icon>
-                      </button>
-                    }
-                    <button mat-icon-button color="warn" (click)="deleteGoods(g)" matTooltip="删除">
-                      <mat-icon>delete_outline</mat-icon>
-                    </button>
-                  </div>
-                </mat-card>
-              }
-            </div>
-
-            <mat-paginator
-              [length]="goodsResult()?.total ?? 0"
-              [pageIndex]="goodsPageIndex()"
-              [pageSize]="goodsPageSize"
-              [pageSizeOptions]="[10, 20]"
-              (page)="onGoodsPageChange($event)"
-              showFirstLastButtons
-            >
-            </mat-paginator>
-          }
+<div class="animate-in">
+  <div class="container-apple" style="padding-top: 32px; padding-bottom: 60px;">
+    @if (currentUser(); as user) {
+      <!-- 用户信息头部 -->
+      <div class="user-header">
+        <label class="avatar-wrap">
+          <input type="file" accept="image/*" hidden (change)="onAvatarSelected($event)" />
+          <img class="avatar" [src]="img(user.avatar) || '/avatar-default.svg'" alt="" />
+          <span class="avatar-mask" [class.uploading]="avatarUploading()">
+            <span nz-icon [nzType]="avatarUploading() ? 'loading' : 'camera'" class="text-[18px]"></span>
+          </span>
+        </label>
+        <div class="flex-1 min-w-0">
+          <h1 class="text-[22px] font-bold tracking-tight truncate" style="color: var(--color-text);">
+            {{ user.nickname || user.username }}
+          </h1>
+          <p class="text-[13px] mt-1" style="color: var(--color-text-tertiary);">
+            用户名：{{ user.username }} · 注册于 {{ user.create_time | date: 'yyyy-MM-dd' }}
+          </p>
         </div>
-      </mat-tab>
-    </mat-tab-group>
-  }
+        <button class="publish-btn shrink-0" routerLink="/publish">
+          <span nz-icon nzType="plus" class="text-[13px]"></span>
+          <span>发布闲置</span>
+        </button>
+      </div>
+
+      <nz-tabs nzSize="large" class="profile-tabs">
+        <!-- 个人信息 -->
+        <nz-tab nzTitle="个人信息">
+          <div class="tab-card">
+            <form [formGroup]="profileForm" (ngSubmit)="saveProfile()" class="tab-form">
+              <div class="form-field">
+                <label class="field-label">昵称</label>
+                <input nz-input class="input-apple" formControlName="nickname" placeholder="展示昵称" />
+                @if (profileForm.controls.nickname.hasError('maxlength')) {
+                  <p class="field-error">昵称最多 50 个字符</p>
+                }
+              </div>
+
+              <div class="form-field">
+                <label class="field-label">手机号</label>
+                <input nz-input class="input-apple" formControlName="phone" placeholder="11 位手机号" />
+                @if (profileForm.controls.phone.hasError('pattern') && profileForm.controls.phone.touched) {
+                  <p class="field-error">手机号格式不正确</p>
+                }
+              </div>
+
+              <button class="btn-primary form-submit" type="submit" [disabled]="savingProfile()">
+                {{ savingProfile() ? '保存中…' : '保存修改' }}
+              </button>
+            </form>
+          </div>
+        </nz-tab>
+
+        <!-- 修改密码 -->
+        <nz-tab nzTitle="修改密码">
+          <div class="tab-card">
+            <form [formGroup]="passwordForm" (ngSubmit)="savePassword()" class="tab-form">
+              <div class="form-field">
+                <label class="field-label">原密码</label>
+                <input nz-input type="password" class="input-apple" formControlName="oldPassword" />
+                @if (passwordForm.controls.oldPassword.hasError('required') && passwordForm.controls.oldPassword.touched) {
+                  <p class="field-error">请输入原密码</p>
+                }
+              </div>
+
+              <div class="form-field">
+                <label class="field-label">新密码</label>
+                <input nz-input type="password" class="input-apple" formControlName="newPassword" placeholder="至少 6 位" />
+                @if (passwordForm.controls.newPassword.hasError('required') && passwordForm.controls.newPassword.touched) {
+                  <p class="field-error">请输入新密码</p>
+                } @else if (passwordForm.controls.newPassword.hasError('minlength')) {
+                  <p class="field-error">密码至少 6 位</p>
+                }
+              </div>
+
+              <div class="form-field">
+                <label class="field-label">确认新密码</label>
+                <input nz-input type="password" class="input-apple" formControlName="confirmPassword" />
+                @if (passwordForm.controls.confirmPassword.hasError('required') && passwordForm.controls.confirmPassword.touched) {
+                  <p class="field-error">请再次输入新密码</p>
+                }
+              </div>
+
+              <button class="btn-primary form-submit" type="submit" [disabled]="savingPassword()">
+                {{ savingPassword() ? '提交中…' : '修改密码' }}
+              </button>
+            </form>
+          </div>
+        </nz-tab>
+
+        <!-- 我的发布 -->
+        <nz-tab nzTitle="我的发布">
+          <div class="tab-card">
+            @if (goodsLoading()) {
+              <div class="flex justify-center py-14"><nz-spin nzSize="large" /></div>
+            } @else if (goodsRecords().length === 0) {
+              <div class="empty-card">
+                <span nz-icon nzType="inbox" class="text-[44px] mb-3" style="color: var(--color-border);"></span>
+                <p class="text-[15px] mb-5" style="color: var(--color-text-tertiary);">还没有发布过闲置</p>
+                <button class="btn-primary !py-2.5 !px-7 !text-[15px]" routerLink="/publish">去发布</button>
+              </div>
+            } @else {
+              <div class="flex flex-col gap-3">
+                @for (g of goodsRecords(); track g.id) {
+                  <div class="goods-row">
+                    <a [routerLink]="['/goods', g.id]" class="flex items-center gap-4 min-w-0 flex-1">
+                      <img
+                        class="w-14 h-14 rounded-xl object-cover shrink-0"
+                        [src]="g.cover_image ? img(g.cover_image) : '/goods-default.svg'"
+                        alt=""
+                      />
+                      <div class="min-w-0">
+                        <p class="text-[15px] font-medium truncate" style="color: var(--color-text);">{{ g.title }}</p>
+                        <p class="price text-[15px] mt-0.5">¥{{ g.price }}</p>
+                      </div>
+                    </a>
+                    <span class="tag-apple shrink-0" [style]="goodsStatusStyle(g.status)">{{ goodsStatusText(g.status) }}</span>
+                    <div class="flex items-center gap-1 shrink-0">
+                      <a
+                        nz-button
+                        nzSize="small"
+                        nzShape="circle"
+                        [routerLink]="['/publish']"
+                        [queryParams]="{ id: g.id }"
+                        nz-tooltip
+                        nzTooltipTitle="编辑"
+                      >
+                        <span nz-icon nzType="edit"></span>
+                      </a>
+                      @if (g.status === 1) {
+                        <button
+                          nz-button
+                          nzSize="small"
+                          nzShape="circle"
+                          (click)="offlineGoods(g)"
+                          nz-tooltip
+                          nzTooltipTitle="下架"
+                        >
+                          <span nz-icon nzType="cloud-download"></span>
+                        </button>
+                      }
+                      <button
+                        nz-button
+                        nzSize="small"
+                        nzShape="circle"
+                        nzDanger
+                        nz-popconfirm
+                        nzPopconfirmTitle="确定删除吗？删除后不可恢复"
+                        (nzOnConfirm)="deleteGoods(g)"
+                        nz-tooltip
+                        nzTooltipTitle="删除"
+                      >
+                        <span nz-icon nzType="delete"></span>
+                      </button>
+                    </div>
+                  </div>
+                }
+              </div>
+
+              <div class="flex justify-center mt-6">
+                <nz-pagination
+                  [nzTotal]="goodsResult()?.total ?? 0"
+                  [nzPageIndex]="goodsPageIndex()"
+                  [nzPageSize]="goodsPageSize"
+                  (nzPageIndexChange)="onGoodsPageChange($event)"
+                />
+              </div>
+            }
+          </div>
+        </nz-tab>
+      </nz-tabs>
+    }
+  </div>
 </div>

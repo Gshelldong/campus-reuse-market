@@ -38,6 +38,17 @@ export function goodsStatusColor(status: number): string {
   return GOODS_STATUS.find((s) => s.value === status)?.color ?? '';
 }
 
+/** 商品状态胶囊样式（Apple 风格浅色标签） */
+export function goodsStatusStyle(status: number): string {
+  const map: Record<number, string> = {
+    0: 'color:#d97706;background:#d977061a',
+    1: 'color:#16a34a;background:#16a34a1a',
+    2: 'color:#2563eb;background:#2563eb1a',
+    3: 'color:#64748b;background:#64748b1a',
+  };
+  return map[status] ?? map[3];
+}
+
 export const ORDER_STATUS = [
   { value: 0, label: '待确认', color: 'accent' },
   { value: 1, label: '交易完成', color: 'primary' },

@@ -1,16 +1,18 @@
 import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { MatButtonModule } from '@angular/material/button';
-import { MatCardModule } from '@angular/material/card';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatIconModule } from '@angular/material/icon';
-import { MatInputModule } from '@angular/material/input';
-import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatSelectModule } from '@angular/material/select';
-import { MatSnackBar } from '@angular/material/snack-bar';
-import { MatTabsModule } from '@angular/material/tabs';
+import { DatePipe } from '@angular/common';
+import { NzTabsModule } from 'ng-zorro-antd/tabs';
+import { NzSelectModule } from 'ng-zorro-antd/select';
+import { NzButtonModule } from 'ng-zorro-antd/button';
+import { NzInputModule } from 'ng-zorro-antd/input';
+import { NzIconModule } from 'ng-zorro-antd/icon';
+import { NzTagModule } from 'ng-zorro-antd/tag';
+import { NzPaginationModule } from 'ng-zorro-antd/pagination';
+import { NzSpinModule } from 'ng-zorro-antd/spin';
+import { NzModalModule, NzModalService } from 'ng-zorro-antd/modal';
+import { NzPopconfirmModule } from 'ng-zorro-antd/popconfirm';
+import { NzMessageService } from 'ng-zorro-antd/message';
+import { NzToolTipModule } from 'ng-zorro-antd/tooltip';
 import { RouterLink } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Subject, debounceTime, distinctUntilChanged, takeUntil } from 'rxjs';
@@ -34,18 +36,20 @@ const PAGE_SIZE = 10;
 @Component({
   selector: 'app-admin',
   imports: [
-    CommonModule,
     FormsModule,
-    MatButtonModule,
-    MatCardModule,
-    MatFormFieldModule,
-    MatIconModule,
-    MatInputModule,
-    MatPaginatorModule,
-    MatProgressSpinnerModule,
-    MatSelectModule,
-    MatTabsModule,
+    DatePipe,
     RouterLink,
+    NzTabsModule,
+    NzSelectModule,
+    NzButtonModule,
+    NzInputModule,
+    NzIconModule,
+    NzTagModule,
+    NzPaginationModule,
+    NzSpinModule,
+    NzModalModule,
+    NzPopconfirmModule,
+    NzToolTipModule,
   ],
   templateUrl: './admin.html',
   styleUrl: './admin.css',
@@ -55,7 +59,8 @@ export class AdminPage implements OnInit, OnDestroy {
   private userService = inject(UserService);
   private categoryService = inject(CategoryService);
   private orderService = inject(OrderService);
-  private snackBar = inject(MatSnackBar);
+  private message = inject(NzMessageService);
+  private modal = inject(NzModalService);
   private destroy$ = new Subject<void>();
 
   readonly img = imageUrl;
@@ -65,14 +70,34 @@ export class AdminPage implements OnInit, OnDestroy {
   readonly orderStatusColor = orderStatusColor;
   readonly goodsStatusOptions = GOODS_STATUS;
   readonly orderStatusOptions = ORDER_STATUS;
+  readonly pageSize = PAGE_SIZE;
 
-  readonly tabIndex = signal(0);
+  /** 商品状态胶囊样式 */
+  goodsStatusStyle(status: number): string {
+    const map: Record<number, string> = {
+      0: 'color:#d97706;background:#d977061a',
+      1: 'color:#16a34a;background:#16a34a1a',
+      2: 'color:#2563eb;background:#2563eb1a',
+      3: 'color:#64748b;background:#64748b1a',
+    };
+    return map[status] ?? map[3];
+  }
+
+  /** 订单状态胶囊样式 */
+  orderStatusStyle(status: number): string {
+    const map: Record<number, string> = {
+      0: 'color:#d97706;background:#d977061a',
+      1: 'color:#16a34a;background:#16a34a1a',
+      2: 'color:#64748b;background:#64748b1a',
+    };
+    return map[status] ?? map[2];
+  }
 
   // ---- 商品审核 ----
   readonly goodsLoading = signal(true);
   readonly goodsResult = signal<PageResult<GoodsListItem> | null>(null);
   readonly goodsRecords = signal<GoodsListItem[]>([]);
-  readonly goodsPageIndex = signal(0);
+  readonly goodsPageIndex = signal(1);
   goodsKeyword = '';
   goodsStatusFilter: number | null = null;
   private goodsKeyword$ = new Subject<string>();
@@ -83,16 +108,17 @@ export class AdminPage implements OnInit, OnDestroy {
 
   // ---- 分类管理 ----
   readonly categories = signal<Category[]>([]);
-  newCategoryName = '';
-  newCategorySort = 0;
-  editingCategoryId: number | null = null;
-  editingCategoryName = '';
+  readonly categoriesLoading = signal(false);
+  categoryModalVisible = false;
+  categoryEditing: Category | null = null;
+  categoryName = '';
+  categorySort = 0;
 
   // ---- 订单查看 ----
   readonly ordersLoading = signal(true);
   readonly ordersResult = signal<PageResult<Order> | null>(null);
   readonly ordersRecords = signal<Order[]>([]);
-  readonly ordersPageIndex = signal(0);
+  readonly ordersPageIndex = signal(1);
   orderStatusFilter: number | null = null;
 
   ngOnInit(): void {
@@ -104,7 +130,7 @@ export class AdminPage implements OnInit, OnDestroy {
     this.goodsKeyword$
       .pipe(debounceTime(400), distinctUntilChanged(), takeUntil(this.destroy$))
       .subscribe(() => {
-        this.goodsPageIndex.set(0);
+        this.goodsPageIndex.set(1);
         this.loadGoods();
       });
   }
@@ -114,10 +140,6 @@ export class AdminPage implements OnInit, OnDestroy {
     this.destroy$.complete();
   }
 
-  onTabChange(index: number): void {
-    this.tabIndex.set(index);
-  }
-
   // ============ 商品审核 ============
 
   onGoodsKeywordInput(value: string): void {
@@ -125,12 +147,12 @@ export class AdminPage implements OnInit, OnDestroy {
   }
 
   onGoodsFilterChange(): void {
-    this.goodsPageIndex.set(0);
+    this.goodsPageIndex.set(1);
     this.loadGoods();
   }
 
-  onGoodsPageChange(event: PageEvent): void {
-    this.goodsPageIndex.set(event.pageIndex);
+  onGoodsPageChange(page: number): void {
+    this.goodsPageIndex.set(page);
     this.loadGoods();
   }
 
@@ -140,10 +162,10 @@ export class AdminPage implements OnInit, OnDestroy {
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (res) => {
-          this.snackBar.open(res.message, '知道了', { duration: 2000 });
+          this.message.success(res.message || '操作成功');
           this.loadGoods();
         },
-        error: (err: HttpErrorResponse) => this.snackBar.open(err.error?.detail ?? '操作失败', '知道了', { duration: 2500 }),
+        error: (err: HttpErrorResponse) => this.message.error(err.error?.detail ?? '操作失败'),
       });
   }
 
@@ -151,9 +173,12 @@ export class AdminPage implements OnInit, OnDestroy {
     this.goodsService
       .offlineGoods(goods.id)
       .pipe(takeUntil(this.destroy$))
-      .subscribe(() => {
-        this.snackBar.open('已下架', '知道了', { duration: 2000 });
-        this.loadGoods();
+      .subscribe({
+        next: () => {
+          this.message.success('已下架');
+          this.loadGoods();
+        },
+        error: (err: HttpErrorResponse) => this.message.error(err.error?.detail ?? '操作失败'),
       });
   }
 
@@ -161,7 +186,7 @@ export class AdminPage implements OnInit, OnDestroy {
     this.goodsLoading.set(true);
     this.goodsService
       .adminListGoods({
-        page: this.goodsPageIndex() + 1,
+        page: this.goodsPageIndex(),
         page_size: PAGE_SIZE,
         keyword: this.goodsKeyword || undefined,
         status: this.goodsStatusFilter,
@@ -185,10 +210,10 @@ export class AdminPage implements OnInit, OnDestroy {
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (res) => {
-          this.snackBar.open(res.status === 1 ? '该账号已禁用' : '该账号已恢复', '知道了', { duration: 2000 });
+          this.message.success(res.status === 1 ? '该账号已禁用' : '该账号已恢复');
           this.loadUsers();
         },
-        error: (err: HttpErrorResponse) => this.snackBar.open(err.error?.detail ?? '操作失败', '知道了', { duration: 2500 }),
+        error: (err: HttpErrorResponse) => this.message.error(err.error?.detail ?? '操作失败'),
       });
   }
 
@@ -206,93 +231,81 @@ export class AdminPage implements OnInit, OnDestroy {
       });
   }
 
-  // ============ 分类管理 ============
+  // ============ 分类管理（对话框 CRUD） ============
 
-  addCategory(): void {
-    const name = this.newCategoryName.trim();
+  openCategoryModal(cat: Category | null): void {
+    this.categoryEditing = cat;
+    this.categoryName = cat?.name ?? '';
+    this.categorySort = cat?.sort ?? 0;
+    this.categoryModalVisible = true;
+  }
+
+  closeCategoryModal(): void {
+    this.categoryModalVisible = false;
+  }
+
+  saveCategory(): void {
+    const name = this.categoryName.trim();
     if (!name) {
-      this.snackBar.open('请输入分类名称', '知道了', { duration: 2000 });
+      this.message.warning('请输入分类名称');
       return;
     }
-    this.categoryService
-      .create({ name, sort: this.newCategorySort })
-      .pipe(takeUntil(this.destroy$))
-      .subscribe({
-        next: () => {
-          this.newCategoryName = '';
-          this.newCategorySort = 0;
-          this.snackBar.open('分类已添加', '知道了', { duration: 2000 });
-          this.loadCategories();
-        },
-        error: (err: HttpErrorResponse) => this.snackBar.open(err.error?.detail ?? '添加失败', '知道了', { duration: 2500 }),
-      });
-  }
-
-  startEditCategory(cat: Category): void {
-    this.editingCategoryId = cat.id;
-    this.editingCategoryName = cat.name;
-  }
-
-  saveCategoryEdit(cat: Category): void {
-    const name = this.editingCategoryName.trim();
-    if (!name) {
-      return;
-    }
-    this.categoryService
-      .update(cat.id, { name })
-      .pipe(takeUntil(this.destroy$))
-      .subscribe({
-        next: () => {
-          this.editingCategoryId = null;
-          this.snackBar.open('分类已更新', '知道了', { duration: 2000 });
-          this.loadCategories();
-        },
-        error: (err: HttpErrorResponse) => this.snackBar.open(err.error?.detail ?? '更新失败', '知道了', { duration: 2500 }),
-      });
-  }
-
-  cancelCategoryEdit(): void {
-    this.editingCategoryId = null;
+    const req$ = this.categoryEditing
+      ? this.categoryService.update(this.categoryEditing.id, { name, sort: this.categorySort })
+      : this.categoryService.create({ name, sort: this.categorySort });
+    req$.pipe(takeUntil(this.destroy$)).subscribe({
+      next: () => {
+        this.message.success(this.categoryEditing ? '分类已更新' : '分类已添加');
+        this.categoryModalVisible = false;
+        this.loadCategories();
+      },
+      error: (err: HttpErrorResponse) => this.message.error(err.error?.detail ?? '保存失败'),
+    });
   }
 
   deleteCategory(cat: Category): void {
-    if (confirm(`确定删除分类「${cat.name}」吗？`)) {
-      this.categoryService
-        .delete(cat.id)
-        .pipe(takeUntil(this.destroy$))
-        .subscribe({
-          next: () => {
-            this.snackBar.open('分类已删除', '知道了', { duration: 2000 });
-            this.loadCategories();
-          },
-          error: (err: HttpErrorResponse) => this.snackBar.open(err.error?.detail ?? '删除失败', '知道了', { duration: 2500 }),
-        });
-    }
+    this.categoryService
+      .delete(cat.id)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: () => {
+          this.message.success('分类已删除');
+          this.loadCategories();
+        },
+        error: (err: HttpErrorResponse) => this.message.error(err.error?.detail ?? '删除失败'),
+      });
   }
 
   private loadCategories(): void {
+    this.categoriesLoading.set(true);
     this.categoryService
       .list()
       .pipe(takeUntil(this.destroy$))
-      .subscribe((list) => this.categories.set(list));
+      .subscribe({
+        next: (list) => {
+          this.categories.set(list);
+          this.categoriesLoading.set(false);
+        },
+        error: () => this.categoriesLoading.set(false),
+      });
   }
 
   // ============ 订单查看 ============
 
   onOrderFilterChange(): void {
-    this.ordersPageIndex.set(0);
+    this.ordersPageIndex.set(1);
     this.loadOrders();
   }
 
-  onOrdersPageChange(event: PageEvent): void {
-    this.ordersPageIndex.set(event.pageIndex);
+  onOrdersPageChange(page: number): void {
+    this.ordersPageIndex.set(page);
     this.loadOrders();
   }
 
   private loadOrders(): void {
     this.ordersLoading.set(true);
     this.orderService
-      .adminList(this.ordersPageIndex() + 1, PAGE_SIZE, this.orderStatusFilter)
+      .adminList(this.ordersPageIndex(), PAGE_SIZE, this.orderStatusFilter)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (res) => {

@@ -1,21 +1,19 @@
 import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { DatePipe } from '@angular/common';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { MatButtonModule } from '@angular/material/button';
-import { MatCardModule } from '@angular/material/card';
-import { MatDialog } from '@angular/material/dialog';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatIconModule } from '@angular/material/icon';
-import { MatInputModule } from '@angular/material/input';
-import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatSnackBar } from '@angular/material/snack-bar';
-import { MatTabsModule } from '@angular/material/tabs';
-import { MatTooltipModule } from '@angular/material/tooltip';
+import { NzButtonModule } from 'ng-zorro-antd/button';
+import { NzInputModule } from 'ng-zorro-antd/input';
+import { NzIconModule } from 'ng-zorro-antd/icon';
+import { NzTabsModule } from 'ng-zorro-antd/tabs';
+import { NzSpinModule } from 'ng-zorro-antd/spin';
+import { NzPaginationModule } from 'ng-zorro-antd/pagination';
+import { NzPopconfirmModule } from 'ng-zorro-antd/popconfirm';
+import { NzToolTipModule } from 'ng-zorro-antd/tooltip';
+import { NzMessageService } from 'ng-zorro-antd/message';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Subject, takeUntil } from 'rxjs';
-import { goodsStatusColor, goodsStatusText, imageUrl } from '../../core/api';
+import { goodsStatusStyle, goodsStatusText, imageUrl } from '../../core/api';
 import { GoodsListItem, PageResult } from '../../core/models';
 import { AuthService } from '../../core/services/auth.service';
 import { GoodsService } from '../../core/services/goods.service';
@@ -27,18 +25,17 @@ const PAGE_SIZE = 10;
 @Component({
   selector: 'app-profile',
   imports: [
-    CommonModule,
+    DatePipe,
     ReactiveFormsModule,
-    MatButtonModule,
-    MatCardModule,
-    MatFormFieldModule,
-    MatIconModule,
-    MatInputModule,
-    MatPaginatorModule,
-    MatProgressSpinnerModule,
-    MatTabsModule,
-    MatTooltipModule,
     RouterLink,
+    NzButtonModule,
+    NzInputModule,
+    NzIconModule,
+    NzTabsModule,
+    NzSpinModule,
+    NzPaginationModule,
+    NzPopconfirmModule,
+    NzToolTipModule,
   ],
   templateUrl: './profile.html',
   styleUrl: './profile.css',
@@ -49,14 +46,14 @@ export class ProfilePage implements OnInit, OnDestroy {
   private userService = inject(UserService);
   private goodsService = inject(GoodsService);
   private uploadService = inject(UploadService);
-  private snackBar = inject(MatSnackBar);
+  private message = inject(NzMessageService);
   private route = inject(ActivatedRoute);
   private destroy$ = new Subject<void>();
 
   readonly currentUser = this.auth.currentUser;
   readonly img = imageUrl;
   readonly goodsStatusText = goodsStatusText;
-  readonly goodsStatusColor = goodsStatusColor;
+  readonly goodsStatusStyle = goodsStatusStyle;
 
   readonly tabIndex = signal(0);
   readonly avatarUploading = signal(false);
@@ -66,7 +63,7 @@ export class ProfilePage implements OnInit, OnDestroy {
   readonly goodsLoading = signal(true);
   readonly goodsResult = signal<PageResult<GoodsListItem> | null>(null);
   readonly goodsRecords = signal<GoodsListItem[]>([]);
-  readonly goodsPageIndex = signal(0);
+  readonly goodsPageIndex = signal(1);
   readonly goodsPageSize = PAGE_SIZE;
 
   profileForm = this.fb.group({
@@ -120,14 +117,14 @@ export class ProfilePage implements OnInit, OnDestroy {
               next: (user) => {
                 this.auth.syncUser(user);
                 this.avatarUploading.set(false);
-                this.snackBar.open('头像已更新', '知道了', { duration: 2000 });
+                this.message.success('头像已更新');
               },
               error: () => this.avatarUploading.set(false),
             });
         },
         error: () => {
           this.avatarUploading.set(false);
-          this.snackBar.open('头像上传失败', '知道了', { duration: 2000 });
+          this.message.error('头像上传失败');
         },
       });
     input.value = '';
@@ -146,7 +143,7 @@ export class ProfilePage implements OnInit, OnDestroy {
         next: (user) => {
           this.auth.syncUser(user);
           this.savingProfile.set(false);
-          this.snackBar.open('资料已更新', '知道了', { duration: 2000 });
+          this.message.success('资料已更新');
         },
         error: () => this.savingProfile.set(false),
       });
@@ -159,7 +156,7 @@ export class ProfilePage implements OnInit, OnDestroy {
     }
     const { oldPassword, newPassword, confirmPassword } = this.passwordForm.getRawValue();
     if (newPassword !== confirmPassword) {
-      this.snackBar.open('两次输入的新密码不一致', '知道了', { duration: 2500 });
+      this.message.warning('两次输入的新密码不一致');
       return;
     }
     this.savingPassword.set(true);
@@ -170,17 +167,17 @@ export class ProfilePage implements OnInit, OnDestroy {
         next: () => {
           this.savingPassword.set(false);
           this.passwordForm.reset();
-          this.snackBar.open('密码修改成功，请牢记新密码', '知道了', { duration: 2500 });
+          this.message.success('密码修改成功，请牢记新密码');
         },
         error: (err: HttpErrorResponse) => {
           this.savingPassword.set(false);
-          this.snackBar.open(err.error?.detail ?? '密码修改失败', '知道了', { duration: 2500 });
+          this.message.error(err.error?.detail ?? '密码修改失败');
         },
       });
   }
 
-  onGoodsPageChange(event: PageEvent): void {
-    this.goodsPageIndex.set(event.pageIndex);
+  onGoodsPageChange(page: number): void {
+    this.goodsPageIndex.set(page);
     this.loadMyGoods();
   }
 
@@ -188,28 +185,32 @@ export class ProfilePage implements OnInit, OnDestroy {
     this.goodsService
       .offlineGoods(goods.id)
       .pipe(takeUntil(this.destroy$))
-      .subscribe(() => {
-        this.snackBar.open('已下架', '知道了', { duration: 2000 });
-        this.loadMyGoods();
+      .subscribe({
+        next: () => {
+          this.message.success('已下架');
+          this.loadMyGoods();
+        },
+        error: (err: HttpErrorResponse) => this.message.error(err.error?.detail ?? '操作失败'),
       });
   }
 
   deleteGoods(goods: GoodsListItem): void {
-    if (confirm(`确定删除「${goods.title}」吗？删除后不可恢复。`)) {
-      this.goodsService
-        .deleteGoods(goods.id)
-        .pipe(takeUntil(this.destroy$))
-        .subscribe(() => {
-          this.snackBar.open('已删除', '知道了', { duration: 2000 });
+    this.goodsService
+      .deleteGoods(goods.id)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: () => {
+          this.message.success('已删除');
           this.loadMyGoods();
-        });
-    }
+        },
+        error: (err: HttpErrorResponse) => this.message.error(err.error?.detail ?? '删除失败'),
+      });
   }
 
   private loadMyGoods(): void {
     this.goodsLoading.set(true);
     this.goodsService
-      .myGoods(this.goodsPageIndex() + 1, this.goodsPageSize)
+      .myGoods(this.goodsPageIndex(), this.goodsPageSize)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (res) => {
