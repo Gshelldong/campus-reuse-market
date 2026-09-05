@@ -1,6 +1,6 @@
 import os
 
-DB_HOST = os.getenv("DB_HOST", "192.168.21.146")
+DB_HOST = os.getenv("DB_HOST", "192.168.124.50")
 DB_PORT = int(os.getenv("DB_PORT", "3307"))
 DB_USER = os.getenv("DB_USER", "root")
 DB_PASSWORD = os.getenv("DB_PASSWORD", "test123456")

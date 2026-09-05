@@ -27,6 +27,7 @@ class UserOut(BaseModel):
     avatar: str
     phone: str
     role: int
+    status: int
     create_time: datetime
 
     model_config = {"from_attributes": True}
