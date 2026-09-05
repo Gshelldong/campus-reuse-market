@@ -1,10 +1,12 @@
 <div class="auth-wrapper">
   <mat-card class="auth-card">
-    <div class="auth-header">
-      <mat-icon color="primary">recycling</mat-icon>
-      <h1>校园二手交易平台</h1>
-      <p>登录账号，开启闲置交易</p>
-    </div>
+    <a routerLink="/home" class="brand-link">
+      <div class="auth-header">
+        <mat-icon color="primary">recycling</mat-icon>
+        <h1>校园二手交易平台</h1>
+        <p>登录账号，开启闲置交易</p>
+      </div>
+    </a>
 
     <form [formGroup]="form" (ngSubmit)="submit()">
       <mat-form-field appearance="outline" class="full-width">

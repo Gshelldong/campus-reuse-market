@@ -68,9 +68,14 @@
         <p class="error-tip">{{ errorMsg() }}</p>
       }
 
-      <button mat-flat-button color="primary" type="submit" class="full-width" [disabled]="loading()">
-        {{ loading() ? '注册中…' : '注 册' }}
-      </button>
+      <div class="button-row">
+        <button mat-flat-button color="primary" type="submit" class="full-width" [disabled]="loading()">
+          {{ loading() ? '注册中…' : '注 册' }}
+        </button>
+        <button mat-stroked-button routerLink="/home" class="full-width cancel-btn">
+          取 消
+        </button>
+      </div>
     </form>
 
     <p class="auth-switch">

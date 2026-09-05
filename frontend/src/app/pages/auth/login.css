@@ -47,6 +47,24 @@
   margin-bottom: 16px;
 }
 
+.button-row {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.cancel-btn {
+  border-radius: 8px;
+  height: 44px;
+  transition: all 0.2s;
+
+  &:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  }
+}
+
 .error-tip {
   color: #ef4444;
   font-size: 14px;
@@ -54,6 +72,17 @@
   padding: 8px 12px;
   background: #fef2f2;
   border-radius: 6px;
+}
+
+.brand-link {
+  text-decoration: none;
+  color: inherit;
+  display: block;
+  transition: opacity 0.2s;
+
+  &:hover {
+    opacity: 0.85;
+  }
 }
 
 .auth-switch {
