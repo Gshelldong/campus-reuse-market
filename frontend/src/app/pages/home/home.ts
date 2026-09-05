@@ -41,7 +41,7 @@ export class HomePage implements OnInit, OnDestroy {
 
   selectedCategoryId: number | null = null;
   orderBy = '';
-  pageIndex = 0;
+  pageIndex = 1;
   readonly pageSize = PAGE_SIZE;
 
   ngOnInit(): void {
@@ -55,21 +55,21 @@ export class HomePage implements OnInit, OnDestroy {
   }
 
   onSearch(): void {
-    this.pageIndex = 0;
+    this.pageIndex = 1;
     this.load();
   }
 
   clearKeyword(): void {
     if (this.keyword) {
       this.keyword = '';
-      this.pageIndex = 0;
+      this.pageIndex = 1;
       this.load();
     }
   }
 
   onChipSelect(id: number | null): void {
     this.selectedCategoryId = id === this.selectedCategoryId ? null : id;
-    this.pageIndex = 0;
+    this.pageIndex = 1;
     this.load();
   }
 
@@ -82,7 +82,7 @@ export class HomePage implements OnInit, OnDestroy {
     this.loading.set(true);
     this.goodsService
       .listGoods({
-        page: this.pageIndex + 1,
+        page: this.pageIndex,
         page_size: this.pageSize,
         keyword: this.keyword || undefined,
         category_id: this.selectedCategoryId ?? undefined,

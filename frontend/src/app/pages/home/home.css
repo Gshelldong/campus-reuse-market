@@ -20,3 +20,39 @@
   transform: translateY(-1px);
   box-shadow: var(--shadow-sm);
 }
+
+/* 页脚（与页面同底色，细分隔线过渡） */
+.site-footer {
+  width: 100%;
+  margin-top: 20px;
+  border-top: 1px solid var(--color-border-light);
+  background: var(--color-bg);
+  padding: 26px 0;
+}
+
+.footer-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.footer-brand {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  letter-spacing: 0.02em;
+}
+
+.footer-copy {
+  font-size: 13px;
+  color: var(--color-text-tertiary);
+}
+
+@media (max-width: 640px) {
+  .footer-inner {
+    flex-direction: column;
+    text-align: center;
+  }
+}

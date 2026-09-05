@@ -1,114 +1,125 @@
-<div class="page-container">
-  <mat-card class="form-card publish-card">
-    <h1>{{ editId() ? '编辑商品' : '发布闲置' }}</h1>
-    <p class="subtitle">
-      {{ editId() ? '修改后需重新审核' : '发布后需管理员审核通过才会在首页展示' }}
-    </p>
+<div class="animate-in">
+  <div class="container-apple" style="padding-top: 32px; padding-bottom: 60px;">
+    <div class="publish-card">
+      <h1 class="text-[26px] font-bold tracking-tight" style="color: var(--color-text);">
+        {{ editId() ? '编辑商品' : '发布闲置' }}
+      </h1>
+      <p class="text-[14px] mt-1.5 mb-7" style="color: var(--color-text-secondary);">
+        {{ editId() ? '修改后需重新审核' : '发布后需管理员审核通过才会在首页展示' }}
+      </p>
 
-    @if (!loading()) {
-      <form [formGroup]="form" (ngSubmit)="submit()">
-        <mat-form-field appearance="outline" class="full-width">
-          <mat-label>商品标题</mat-label>
-          <input matInput formControlName="title" placeholder="一句话描述你的闲置，如：九成新考研英语真题" maxlength="100" />
-          @if (form.controls.title.hasError('required')) {
-            <mat-error>请填写商品标题</mat-error>
+      @if (!loading()) {
+        <form [formGroup]="form" (ngSubmit)="submit()" class="publish-form">
+          <div class="form-field">
+            <label class="field-label">商品标题</label>
+            <input
+              nz-input
+              class="input-apple"
+              formControlName="title"
+              placeholder="一句话描述你的闲置，如：九成新考研英语真题"
+              maxlength="100"
+            />
+            @if (form.controls.title.hasError('required') && form.controls.title.touched) {
+              <p class="field-error">请填写商品标题</p>
+            }
+          </div>
+
+          <div class="form-row">
+            <div class="form-field flex-1">
+              <label class="field-label">售价（元）</label>
+              <input nz-input type="number" class="input-apple" formControlName="price" min="0.01" step="0.01" placeholder="0.00" />
+              @if (form.controls.price.hasError('required') && form.controls.price.touched) {
+                <p class="field-error">请填写售价</p>
+              } @else if (form.controls.price.hasError('min')) {
+                <p class="field-error">售价需大于 0</p>
+              }
+            </div>
+
+            <div class="form-field flex-1">
+              <label class="field-label">原价（选填）</label>
+              <input nz-input type="number" class="input-apple" formControlName="originalPrice" min="0" step="0.01" placeholder="买入时的价格" />
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-field flex-1">
+              <label class="field-label">成色</label>
+              <nz-select class="w-full select-apple" formControlName="condition">
+                @for (opt of conditionOptions; track opt.value) {
+                  <nz-option [nzValue]="opt.value" [nzLabel]="opt.label" />
+                }
+              </nz-select>
+            </div>
+
+            <div class="form-field flex-1">
+              <label class="field-label">分类</label>
+              <nz-select class="w-full select-apple" formControlName="categoryId" nzPlaceHolder="选择分类">
+                @for (cat of categories(); track cat.id) {
+                  <nz-option [nzValue]="cat.id" [nzLabel]="cat.name" />
+                }
+              </nz-select>
+              @if (form.controls.categoryId.hasError('required') && form.controls.categoryId.touched) {
+                <p class="field-error">请选择分类</p>
+              }
+            </div>
+          </div>
+
+          <div class="form-field">
+            <label class="field-label">商品描述</label>
+            <textarea
+              nz-input
+              class="input-apple"
+              formControlName="description"
+              rows="5"
+              placeholder="描述商品的使用情况、瑕疵、交易方式等"
+            ></textarea>
+          </div>
+
+          @if (!editId()) {
+            <div class="form-field">
+              <label class="field-label">商品图片（最多 6 张，可多选）</label>
+              <div class="upload-area">
+                @if (previewUrls().length < 6) {
+                  <label class="upload-trigger">
+                    <input type="file" accept="image/*" multiple hidden (change)="onFilesSelected($event)" />
+                    <span nz-icon nzType="picture" class="text-[24px] mb-1.5"></span>
+                    <span>添加图片</span>
+                  </label>
+                }
+                @for (url of previewUrls(); track $index) {
+                  <div class="preview-item">
+                    <img nz-image [nzSrc]="url" nzPreview nzPreviewDescription="新上传图片" alt="" class="preview-img" />
+                    <button class="remove-btn" (click)="removeNewFile($index)" type="button">
+                      <span nz-icon nzType="close" class="text-[12px]"></span>
+                    </button>
+                  </div>
+                }
+              </div>
+            </div>
+          } @else {
+            <div class="form-field">
+              <label class="field-label">当前图片（编辑模式下不可更换）</label>
+              <div class="upload-area">
+                @if (existingImages().length === 0) {
+                  <p class="text-[13px] py-4" style="color: var(--color-text-tertiary);">无图片</p>
+                }
+                @for (image of existingImages(); track image.id) {
+                  <div class="preview-item">
+                    <img nz-image [nzSrc]="img(image.image_url)" nzPreview alt="" class="preview-img" />
+                  </div>
+                }
+              </div>
+            </div>
           }
-        </mat-form-field>
 
-        <div class="row">
-          <mat-form-field appearance="outline" class="half">
-            <mat-label>售价（元）</mat-label>
-            <input matInput type="number" formControlName="price" min="0.01" step="0.01" placeholder="0.00" />
-            @if (form.controls.price.hasError('required')) {
-              <mat-error>请填写售价</mat-error>
-            } @else if (form.controls.price.hasError('min')) {
-              <mat-error>售价需大于 0</mat-error>
-            }
-          </mat-form-field>
-
-          <mat-form-field appearance="outline" class="half">
-            <mat-label>原价（选填）</mat-label>
-            <input matInput type="number" formControlName="originalPrice" min="0" step="0.01" placeholder="买入时的价格" />
-          </mat-form-field>
-        </div>
-
-        <div class="row">
-          <mat-form-field appearance="outline" class="half">
-            <mat-label>成色</mat-label>
-            <mat-select formControlName="condition">
-              @for (opt of conditionOptions; track opt.value) {
-                <mat-option [value]="opt.value">{{ opt.label }}</mat-option>
-              }
-            </mat-select>
-          </mat-form-field>
-
-          <mat-form-field appearance="outline" class="half">
-            <mat-label>分类</mat-label>
-            <mat-select formControlName="categoryId">
-              @for (cat of categories(); track cat.id) {
-                <mat-option [value]="cat.id">{{ cat.name }}</mat-option>
-              }
-            </mat-select>
-            @if (form.controls.categoryId.hasError('required')) {
-              <mat-error>请选择分类</mat-error>
-            }
-          </mat-form-field>
-        </div>
-
-        <mat-form-field appearance="outline" class="full-width">
-          <mat-label>商品描述</mat-label>
-          <textarea
-            matInput
-            formControlName="description"
-            rows="5"
-            placeholder="描述商品的使用情况、瑕疵、交易方式等"
-          ></textarea>
-        </mat-form-field>
-
-        @if (!editId()) {
-          <div class="upload-section">
-            <p class="upload-label">商品图片（最多 6 张，可多选）</p>
-            <div class="upload-area">
-              @if (previewUrls().length < 6) {
-                <label class="upload-trigger">
-                  <input type="file" accept="image/*" multiple hidden (change)="onFilesSelected($event)" />
-                  <mat-icon>add_photo_alternate</mat-icon>
-                  <span>添加图片</span>
-                </label>
-              }
-              @for (url of previewUrls(); track $index) {
-                <div class="preview-item">
-                  <img [src]="url" alt="" />
-                  <button mat-mini-fab class="remove-btn" (click)="removeNewFile($index)" type="button">
-                    <mat-icon>close</mat-icon>
-                  </button>
-                </div>
-              }
-            </div>
+          <div class="action-row">
+            <button class="btn-primary form-submit-btn" type="submit" [disabled]="submitting()">
+              {{ submitting() ? '提交中…' : editId() ? '保存修改' : '发布商品' }}
+            </button>
+            <a class="cancel-btn" [routerLink]="editId() ? ['/goods', editId()!] : ['/home']">取消</a>
           </div>
-        } @else {
-          <div class="upload-section">
-            <p class="upload-label">当前图片（编辑模式下不可更换）</p>
-            <div class="upload-area">
-              @if (existingImages().length === 0) {
-                <p class="no-image">无图片</p>
-              }
-              @for (image of existingImages(); track image.id; let i = $index) {
-                <div class="preview-item">
-                  <img [src]="img(image.image_url)" alt="" />
-                </div>
-              }
-            </div>
-          </div>
-        }
-
-        <div class="action-row">
-          <button mat-flat-button color="primary" type="submit" [disabled]="submitting()">
-            {{ submitting() ? '提交中…' : editId() ? '保存修改' : '发布商品' }}
-          </button>
-          <a mat-stroked-button type="button" [routerLink]="editId() ? ['/goods', editId()!] : ['/home']">取消</a>
-        </div>
-      </form>
-    }
-  </mat-card>
+        </form>
+      }
+    </div>
+  </div>
 </div>

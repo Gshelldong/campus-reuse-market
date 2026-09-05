@@ -20,7 +20,7 @@
     <div class="flex justify-between items-center text-[12px]" style="color: var(--color-text-secondary);">
       <span class="tag-apple" style="background: var(--color-bg-secondary); color: var(--color-text-secondary);">{{ conditionText(goods().condition) }}</span>
       <span class="flex items-center gap-1.5">
-        <img class="w-5 h-5 rounded-full object-cover" [src]="goods().avatar || '/avatar-default.svg'" alt="" />
+        <img class="w-5 h-5 rounded-full object-cover" [src]="avatar()" alt="" />
         {{ goods().nickname || '同学' }}
       </span>
     </div>

@@ -8,12 +8,12 @@ import {
   signal,
   viewChild,
 } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { MatButtonModule } from '@angular/material/button';
-import { MatIconModule } from '@angular/material/icon';
-import { MatListModule } from '@angular/material/list';
-import { MatSnackBar } from '@angular/material/snack-bar';
+import { NzButtonModule } from 'ng-zorro-antd/button';
+import { NzIconModule } from 'ng-zorro-antd/icon';
+import { NzInputModule } from 'ng-zorro-antd/input';
+import { NzMessageService } from 'ng-zorro-antd/message';
 import { ActivatedRoute } from '@angular/router';
 import { Subject, interval, takeUntil } from 'rxjs';
 import { imageUrl } from '../../core/api';
@@ -23,7 +23,7 @@ import { ChatService } from '../../core/services/chat.service';
 
 @Component({
   selector: 'app-chat',
-  imports: [CommonModule, FormsModule, MatButtonModule, MatIconModule, MatListModule],
+  imports: [DatePipe, FormsModule, NzButtonModule, NzIconModule, NzInputModule],
   templateUrl: './chat.html',
   styleUrl: './chat.css',
 })
@@ -31,7 +31,7 @@ export class ChatPage implements OnInit, OnDestroy {
   private chatService = inject(ChatService);
   private auth = inject(AuthService);
   private route = inject(ActivatedRoute);
-  private snackBar = inject(MatSnackBar);
+  private message = inject(NzMessageService);
   private destroy$ = new Subject<void>();
 
   readonly conversations = signal<Conversation[]>([]);
@@ -104,7 +104,7 @@ export class ChatPage implements OnInit, OnDestroy {
         },
         error: () => {
           this.sending.set(false);
-          this.snackBar.open('发送失败，请稍后再试', '知道了', { duration: 2000 });
+          this.message.error('发送失败，请稍后再试');
         },
       });
   }
@@ -121,6 +121,16 @@ export class ChatPage implements OnInit, OnDestroy {
   peerName(peerId: number): string {
     const conv = this.conversations().find((c) => c.user_id === peerId);
     return conv?.nickname || `用户 ${peerId}`;
+  }
+
+  /** 把消息内容按 URL 切分，链接部分渲染为可点击的 <a> */
+  messageParts(content: string): { text: string; url?: string }[] {
+    return content
+      .split(/(https?:\/\/[^\s]+)/g)
+      .filter((part) => part !== '')
+      .map((part) =>
+        /^https?:\/\//.test(part) ? { text: part, url: part } : { text: part },
+      );
   }
 
   private loadConversations(): void {

@@ -24,7 +24,7 @@
         </button>
       </div>
 
-      <nz-tabs nzSize="large" class="profile-tabs">
+      <nz-tabs nzSize="large" class="profile-tabs" [nzSelectedIndex]="tabIndex()" (nzSelectedIndexChange)="onTabChange($event)">
         <!-- 个人信息 -->
         <nz-tab nzTitle="个人信息">
           <div class="tab-card">
@@ -164,6 +164,139 @@
                   [nzPageIndex]="goodsPageIndex()"
                   [nzPageSize]="goodsPageSize"
                   (nzPageIndexChange)="onGoodsPageChange($event)"
+                />
+              </div>
+            }
+          </div>
+        </nz-tab>
+
+        <!-- 我的订单 -->
+        <nz-tab nzTitle="我的订单">
+          <div class="tab-card">
+            <!-- 买/卖筛选 -->
+            <div class="role-filter">
+              <button
+                class="role-chip"
+                [class.active]="orderRole() === 'all'"
+                (click)="onOrderRoleChange('all')"
+              >全部</button>
+              <button
+                class="role-chip"
+                [class.active]="orderRole() === 'buyer'"
+                (click)="onOrderRoleChange('buyer')"
+              >我买到的</button>
+              <button
+                class="role-chip"
+                [class.active]="orderRole() === 'seller'"
+                (click)="onOrderRoleChange('seller')"
+              >我卖出的</button>
+            </div>
+
+            @if (orderLoading()) {
+              <div class="flex justify-center py-14"><nz-spin nzSize="large" /></div>
+            } @else if (orderRecords().length === 0) {
+              <div class="empty-card">
+                <span nz-icon nzType="inbox" class="text-[44px] mb-3" style="color: var(--color-border);"></span>
+                <p class="text-[15px] mb-5" style="color: var(--color-text-tertiary);">暂无订单</p>
+                <button class="btn-primary !py-2.5 !px-7 !text-[15px]" routerLink="/home">去逛逛</button>
+              </div>
+            } @else {
+              <div class="flex flex-col gap-3">
+                @for (order of orderRecords(); track order.id) {
+                  <div class="goods-row order-row">
+                    <a [routerLink]="['/goods', order.goods_id]" class="flex items-center gap-4 min-w-0 flex-1">
+                      <img
+                        class="w-14 h-14 rounded-xl object-cover shrink-0"
+                        [src]="order.goods_cover ? img(order.goods_cover) : '/goods-default.svg'"
+                        alt=""
+                      />
+                      <div class="min-w-0">
+                        <p class="text-[15px] font-medium truncate" style="color: var(--color-text);">{{ order.goods_title }}</p>
+                        <p class="text-[12px] mt-0.5 truncate" style="color: var(--color-text-tertiary);">
+                          订单号 {{ order.order_no }} ·
+                          {{ order.seller_id === myUserId ? '买家：' + order.buyer_name : '卖家：' + order.seller_name }}
+                          · {{ order.create_time | date: 'yyyy-MM-dd HH:mm' }}
+                        </p>
+                        <p class="price text-[15px] mt-0.5">¥{{ order.price }}</p>
+                      </div>
+                    </a>
+                    <span class="tag-apple shrink-0" [style]="orderStatusStyle(order.status)">{{ orderStatusText(order.status) }}</span>
+                    @if (order.status === 0) {
+                      <div class="flex items-center gap-2 shrink-0">
+                        <button class="btn-primary !py-1.5 !px-4 !text-[13px]" (click)="confirmOrder(order)">确认完成</button>
+                        <button
+                          class="cancel-mini-btn"
+                          nz-popconfirm
+                          nzPopconfirmTitle="确定取消该订单吗？取消后商品会重新上架"
+                          (nzOnConfirm)="cancelOrder(order)"
+                        >取消订单</button>
+                      </div>
+                    }
+                  </div>
+                }
+              </div>
+
+              <div class="flex justify-center mt-6">
+                <nz-pagination
+                  [nzTotal]="orderResult()?.total ?? 0"
+                  [nzPageIndex]="orderPageIndex()"
+                  [nzPageSize]="orderPageSize"
+                  (nzPageIndexChange)="onOrderPageChange($event)"
+                />
+              </div>
+            }
+          </div>
+        </nz-tab>
+
+        <!-- 我的收藏 -->
+        <nz-tab nzTitle="我的收藏">
+          <div class="tab-card">
+            @if (favLoading()) {
+              <div class="flex justify-center py-14"><nz-spin nzSize="large" /></div>
+            } @else if (favRecords().length === 0) {
+              <div class="empty-card">
+                <span nz-icon nzType="star" class="text-[44px] mb-3" style="color: var(--color-border);"></span>
+                <p class="text-[15px] mb-5" style="color: var(--color-text-tertiary);">还没有收藏任何商品</p>
+                <button class="btn-primary !py-2.5 !px-7 !text-[15px]" routerLink="/home">去逛逛</button>
+              </div>
+            } @else {
+              <div class="flex flex-col gap-3">
+                @for (item of favRecords(); track item.favorite_id) {
+                  <div class="goods-row">
+                    <a [routerLink]="['/goods', item.id]" class="flex items-center gap-4 min-w-0 flex-1">
+                      <img
+                        class="w-14 h-14 rounded-xl object-cover shrink-0"
+                        [src]="item.cover_image ? img(item.cover_image) : '/goods-default.svg'"
+                        alt=""
+                      />
+                      <div class="min-w-0">
+                        <p class="text-[15px] font-medium truncate" style="color: var(--color-text);">{{ item.title }}</p>
+                        <p class="price text-[15px] mt-0.5">¥{{ item.price }}</p>
+                      </div>
+                    </a>
+                    @if (item.status !== 1) {
+                      <span class="tag-apple shrink-0" [style]="goodsStatusStyle(item.status)">{{ goodsStatusText(item.status) }}</span>
+                    }
+                    <button
+                      class="fav-remove-btn shrink-0"
+                      nz-popconfirm
+                      nzPopconfirmTitle="取消收藏该商品？"
+                      (nzOnConfirm)="removeFavorite(item)"
+                      nz-tooltip
+                      nzTooltipTitle="取消收藏"
+                    >
+                      <span nz-icon nzType="heart" nzTheme="fill"></span>
+                    </button>
+                  </div>
+                }
+              </div>
+
+              <div class="flex justify-center mt-6">
+                <nz-pagination
+                  [nzTotal]="favResult()?.total ?? 0"
+                  [nzPageIndex]="favPageIndex()"
+                  [nzPageSize]="favPageSize"
+                  (nzPageIndexChange)="onFavPageChange($event)"
                 />
               </div>
             }

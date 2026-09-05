@@ -7,7 +7,7 @@
       </div>
       @if (conversations().length === 0) {
         <div class="panel-empty">
-          <mat-icon>chat_bubble_outline</mat-icon>
+          <span nz-icon nzType="message" nzTheme="outline"></span>
           <p>暂无会话，去商品详情页联系卖家吧</p>
         </div>
       } @else {
@@ -41,20 +41,31 @@
     <div class="chat-panel">
       @if (activePeerId(); as peerId) {
         <div class="panel-header">
-          <button mat-icon-button class="back-btn" (click)="backToList()">
-            <mat-icon>arrow_back</mat-icon>
+          <button nz-button nzType="text" nzShape="circle" class="back-btn" (click)="backToList()">
+            <span nz-icon nzType="left"></span>
           </button>
           <h2>{{ peerName(peerId) }}</h2>
         </div>
         <div class="messages-area" #messagesScroll>
           @if (messages().length === 0) {
-            <p class="no-message">还没有聊天记录，打个招呼吧～</p>
+            <div class="no-message">
+              <span nz-icon nzType="message" nzTheme="outline"></span>
+              <p>还没有聊天记录，打个招呼吧～</p>
+            </div>
           }
           @for (msg of messages(); track msg.id) {
             <div class="message-row" [class.self]="msg.is_self">
               <img class="avatar" [src]="avatarFor(msg.is_self)" alt="" />
               <div class="bubble">
-                <p class="content">{{ msg.content }}</p>
+                <p class="content">
+                  @for (part of messageParts(msg.content); track $index) {
+                    @if (part.url) {
+                      <a class="msg-link" [href]="part.url" target="_blank" rel="noopener">{{ part.text }}</a>
+                    } @else {
+                      {{ part.text }}
+                    }
+                  }
+                </p>
                 <span class="time">{{ msg.create_time | date: 'MM-dd HH:mm' }}</span>
               </div>
             </div>
@@ -62,6 +73,7 @@
         </div>
         <div class="input-area">
           <input
+            class="chat-input"
             type="text"
             placeholder="输入消息…"
             [ngModel]="draft()"
@@ -69,13 +81,20 @@
             (keyup.enter)="send()"
             [disabled]="sending()"
           />
-          <button mat-flat-button color="primary" (click)="send()" [disabled]="sending() || !draft().trim()">
+          <button
+            nz-button
+            nzType="primary"
+            nzShape="round"
+            class="send-btn"
+            (click)="send()"
+            [disabled]="sending() || !draft().trim()"
+          >
             发送
           </button>
         </div>
       } @else {
         <div class="panel-empty select-hint">
-          <mat-icon>forum</mat-icon>
+          <span nz-icon nzType="message" nzTheme="outline"></span>
           <p>选择一个会话开始聊天</p>
         </div>
       }

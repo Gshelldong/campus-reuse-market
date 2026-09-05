@@ -1,4 +1,5 @@
-import { Routes } from '@angular/router';
+import { inject } from '@angular/core';
+import { Router, Routes } from '@angular/router';
 import { adminGuard } from './core/guards/admin.guard';
 
 export const routes: Routes = [
@@ -37,7 +38,11 @@ export const routes: Routes = [
       },
       {
         path: 'order',
-        loadComponent: () => import('./pages/order/order').then((m) => m.OrderPage),
+        redirectTo: () => {
+          const router = inject(Router);
+          return router.createUrlTree(['/profile'], { queryParams: { tab: 'orders' } });
+        },
+        pathMatch: 'full',
       },
       {
         path: 'chat',

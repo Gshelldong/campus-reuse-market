@@ -62,3 +62,13 @@ export function orderStatusText(status: number): string {
 export function orderStatusColor(status: number): string {
   return ORDER_STATUS.find((s) => s.value === status)?.color ?? '';
 }
+
+/** 订单状态胶囊样式（Apple 风格浅色标签） */
+export function orderStatusStyle(status: number): string {
+  const map: Record<number, string> = {
+    0: 'color:#d97706;background:#d977061a',
+    1: 'color:#16a34a;background:#16a34a1a',
+    2: 'color:#64748b;background:#64748b1a',
+  };
+  return map[status] ?? map[2];
+}

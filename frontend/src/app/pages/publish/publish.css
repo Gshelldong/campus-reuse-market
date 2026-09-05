@@ -1,53 +1,67 @@
+/* ===== 发布/编辑闲置 Apple 风格 ===== */
+
 .publish-card {
   max-width: 680px;
-  margin: 28px auto;
-  padding: 32px 36px;
+  margin: 0 auto;
+  padding: 36px 40px;
   box-sizing: border-box;
-  background: white;
-  border-radius: 16px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.12);
-
-  h1 {
-    font-size: 24px;
-    margin: 0 0 6px;
-    color: #1e293b;
-    font-weight: 600;
-  }
-
-  .subtitle {
-    color: #64748b;
-    font-size: 14px;
-    margin: 0 0 28px;
-  }
+  background: var(--color-card);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
 }
 
-.full-width {
-  width: 100%;
-  margin-bottom: 20px;
+.publish-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
 }
 
-.row {
+.form-row {
   display: flex;
   gap: 20px;
-  margin-bottom: 20px;
-
-  .half {
-    flex: 1;
-    min-width: 0;
-  }
 }
 
-.upload-section {
-  margin: 12px 0 24px;
-
-  .upload-label {
-    font-size: 15px;
-    color: #334155;
-    margin: 0 0 12px;
-    font-weight: 500;
-  }
+.form-field {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
 }
 
+.field-label {
+  font-size: 13px;
+  font-weight: 500;
+  margin-bottom: 7px;
+  color: var(--color-text-secondary);
+}
+
+.field-error {
+  font-size: 12px;
+  margin-top: 5px;
+  color: var(--color-danger);
+}
+
+/* nz-select 贴合 Apple 输入框 */
+.select-apple ::ng-deep .ant-select-selector {
+  border-radius: 12px !important;
+  border-color: var(--color-border) !important;
+  height: 44px !important;
+}
+
+.select-apple ::ng-deep .ant-select-selection-item,
+.select-apple ::ng-deep .ant-select-selection-placeholder {
+  line-height: 42px !important;
+}
+
+.select-apple ::ng-deep .ant-select-selector:hover {
+  border-color: rgba(0, 113, 227, 0.45) !important;
+}
+
+.select-apple ::ng-deep .ant-select-focused .ant-select-selector {
+  border-color: var(--color-primary) !important;
+  box-shadow: 0 0 0 4px rgba(0, 113, 227, 0.1) !important;
+}
+
+/* 图片上传区 */
 .upload-area {
   display: flex;
   flex-wrap: wrap;
@@ -57,95 +71,99 @@
 .upload-trigger {
   width: 104px;
   height: 104px;
-  border: 2px dashed #cbd5e1;
-  border-radius: 12px;
+  border: 2px dashed var(--color-border);
+  border-radius: 14px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 6px;
+  gap: 4px;
   cursor: pointer;
-  color: #94a3b8;
+  color: var(--color-text-tertiary);
   font-size: 13px;
-  background: #f8fafc;
-  transition: all 0.2s;
+  background: var(--color-bg-secondary);
+  transition: all 0.25s ease;
+}
 
-  &:hover {
-    border-color: #3b82f6;
-    color: #3b82f6;
-    background: #f1f5f9;
-    transform: translateY(-2px);
-  }
-
-  mat-icon {
-    font-size: 32px;
-    width: 32px;
-    height: 32px;
-  }
+.upload-trigger:hover {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+  background: rgba(0, 113, 227, 0.04);
+  transform: translateY(-2px);
 }
 
 .preview-item {
   position: relative;
   width: 104px;
   height: 104px;
-
-  img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    border-radius: 12px;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  }
-
-  .remove-btn {
-    position: absolute;
-    top: -6px;
-    right: -6px;
-    width: 28px;
-    height: 28px;
-    min-width: 28px;
-    min-height: 28px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: #ef4444;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-    transition: transform 0.2s;
-
-    &:hover {
-      transform: scale(1.1);
-    }
-
-    mat-icon {
-      font-size: 16px;
-      width: 16px;
-      height: 16px;
-      color: white;
-    }
-  }
 }
 
-.no-image {
-  color: #94a3b8;
-  font-size: 14px;
-  align-self: center;
+.preview-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 14px;
+  box-shadow: var(--shadow-sm);
+  cursor: zoom-in;
 }
 
+/* nz-image 预览遮罩层下删除按钮保持可点 */
+.preview-item .remove-btn {
+  z-index: 10;
+}
+
+.remove-btn {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  width: 24px;
+  height: 24px;
+  border: none;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-danger);
+  color: #fff;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+  transition: transform 0.2s ease;
+}
+
+.remove-btn:hover {
+  transform: scale(1.12);
+}
+
+/* 底部操作 */
 .action-row {
   display: flex;
+  align-items: center;
   gap: 12px;
-  padding-top: 12px;
+  padding-top: 8px;
+}
 
-  button {
-    border-radius: 8px;
-    padding: 0 24px;
-    height: 44px;
-    transition: all 0.2s;
+.form-submit-btn {
+  height: 44px;
+  padding: 0 32px;
+  font-size: 15px;
+}
 
-    &:hover {
-      transform: translateY(-1px);
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-    }
-  }
+.cancel-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 44px;
+  padding: 0 28px;
+  border-radius: 980px;
+  border: 1.5px solid var(--color-border);
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--color-text-secondary);
+  transition: all 0.25s ease;
+}
+
+.cancel-btn:hover {
+  border-color: var(--color-text-tertiary);
+  color: var(--color-text);
+  background: rgba(0, 0, 0, 0.02);
 }

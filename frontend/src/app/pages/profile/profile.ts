@@ -13,10 +13,18 @@ import { NzMessageService } from 'ng-zorro-antd/message';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Subject, takeUntil } from 'rxjs';
-import { goodsStatusStyle, goodsStatusText, imageUrl } from '../../core/api';
-import { GoodsListItem, PageResult } from '../../core/models';
+import {
+  goodsStatusStyle,
+  goodsStatusText,
+  imageUrl,
+  orderStatusStyle,
+  orderStatusText,
+} from '../../core/api';
+import { FavoriteItem, GoodsListItem, Order, PageResult } from '../../core/models';
 import { AuthService } from '../../core/services/auth.service';
+import { FavoriteService } from '../../core/services/favorite.service';
 import { GoodsService } from '../../core/services/goods.service';
+import { OrderService } from '../../core/services/order.service';
 import { UploadService } from '../../core/services/upload.service';
 import { UserService } from '../../core/services/user.service';
 
@@ -45,6 +53,8 @@ export class ProfilePage implements OnInit, OnDestroy {
   private auth = inject(AuthService);
   private userService = inject(UserService);
   private goodsService = inject(GoodsService);
+  private orderService = inject(OrderService);
+  private favoriteService = inject(FavoriteService);
   private uploadService = inject(UploadService);
   private message = inject(NzMessageService);
   private route = inject(ActivatedRoute);
@@ -54,6 +64,8 @@ export class ProfilePage implements OnInit, OnDestroy {
   readonly img = imageUrl;
   readonly goodsStatusText = goodsStatusText;
   readonly goodsStatusStyle = goodsStatusStyle;
+  readonly orderStatusText = orderStatusText;
+  readonly orderStatusStyle = orderStatusStyle;
 
   readonly tabIndex = signal(0);
   readonly avatarUploading = signal(false);
@@ -65,6 +77,25 @@ export class ProfilePage implements OnInit, OnDestroy {
   readonly goodsRecords = signal<GoodsListItem[]>([]);
   readonly goodsPageIndex = signal(1);
   readonly goodsPageSize = PAGE_SIZE;
+
+  readonly orderLoading = signal(false);
+  readonly orderResult = signal<PageResult<Order> | null>(null);
+  readonly orderRecords = signal<Order[]>([]);
+  readonly orderPageIndex = signal(1);
+  readonly orderRole = signal<'all' | 'buyer' | 'seller'>('all');
+  readonly orderPageSize = PAGE_SIZE;
+
+  readonly favLoading = signal(false);
+  readonly favResult = signal<PageResult<FavoriteItem> | null>(null);
+  readonly favRecords = signal<FavoriteItem[]>([]);
+  readonly favPageIndex = signal(1);
+  readonly favPageSize = 12;
+
+  readonly myUserId = this.auth.currentUser()?.id ?? 0;
+
+  /** 订单/收藏已加载标记，避免 Tab 初始化时重复请求 */
+  private ordersLoaded = false;
+  private favoritesLoaded = false;
 
   profileForm = this.fb.group({
     nickname: this.fb.control('', [Validators.maxLength(50)]),
@@ -81,12 +112,23 @@ export class ProfilePage implements OnInit, OnDestroy {
     const tab = this.route.snapshot.queryParamMap.get('tab');
     if (tab === 'goods') {
       this.tabIndex.set(2);
+    } else if (tab === 'orders') {
+      this.tabIndex.set(3);
+    } else if (tab === 'favorites') {
+      this.tabIndex.set(4);
     }
     const user = this.auth.currentUser();
     if (user) {
       this.profileForm.patchValue({ nickname: user.nickname, phone: user.phone });
     }
     this.loadMyGoods();
+    if (this.tabIndex() === 3) {
+      this.ordersLoaded = true;
+      this.loadMyOrders();
+    } else if (this.tabIndex() === 4) {
+      this.favoritesLoaded = true;
+      this.loadFavorites();
+    }
   }
 
   ngOnDestroy(): void {
@@ -96,6 +138,13 @@ export class ProfilePage implements OnInit, OnDestroy {
 
   onTabChange(index: number): void {
     this.tabIndex.set(index);
+    if (index === 3 && !this.ordersLoaded) {
+      this.ordersLoaded = true;
+      this.loadMyOrders();
+    } else if (index === 4 && !this.favoritesLoaded) {
+      this.favoritesLoaded = true;
+      this.loadFavorites();
+    }
   }
 
   onAvatarSelected(event: Event): void {
@@ -207,6 +256,61 @@ export class ProfilePage implements OnInit, OnDestroy {
       });
   }
 
+  onOrderRoleChange(role: 'all' | 'buyer' | 'seller'): void {
+    this.orderRole.set(role);
+    this.orderPageIndex.set(1);
+    this.loadMyOrders();
+  }
+
+  onOrderPageChange(page: number): void {
+    this.orderPageIndex.set(page);
+    this.loadMyOrders();
+  }
+
+  confirmOrder(order: Order): void {
+    this.orderService
+      .confirm(order.id)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: () => {
+          this.message.success('交易完成');
+          this.loadMyOrders();
+        },
+        error: (err: HttpErrorResponse) => this.message.error(err.error?.detail ?? '操作失败'),
+      });
+  }
+
+  cancelOrder(order: Order): void {
+    this.orderService
+      .cancel(order.id)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: () => {
+          this.message.success('订单已取消，商品重新上架');
+          this.loadMyOrders();
+        },
+        error: (err: HttpErrorResponse) => this.message.error(err.error?.detail ?? '操作失败'),
+      });
+  }
+
+  onFavPageChange(page: number): void {
+    this.favPageIndex.set(page);
+    this.loadFavorites();
+  }
+
+  removeFavorite(item: FavoriteItem): void {
+    this.favoriteService
+      .remove(item.id)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: () => {
+          this.message.success('已取消收藏');
+          this.loadFavorites();
+        },
+        error: (err: HttpErrorResponse) => this.message.error(err.error?.detail ?? '操作失败'),
+      });
+  }
+
   private loadMyGoods(): void {
     this.goodsLoading.set(true);
     this.goodsService
@@ -219,6 +323,36 @@ export class ProfilePage implements OnInit, OnDestroy {
           this.goodsLoading.set(false);
         },
         error: () => this.goodsLoading.set(false),
+      });
+  }
+
+  private loadMyOrders(): void {
+    this.orderLoading.set(true);
+    this.orderService
+      .my(this.orderPageIndex(), this.orderPageSize, this.orderRole())
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (res) => {
+          this.orderResult.set(res);
+          this.orderRecords.set(res.records);
+          this.orderLoading.set(false);
+        },
+        error: () => this.orderLoading.set(false),
+      });
+  }
+
+  private loadFavorites(): void {
+    this.favLoading.set(true);
+    this.favoriteService
+      .my(this.favPageIndex(), this.favPageSize)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (res) => {
+          this.favResult.set(res);
+          this.favRecords.set(res.records);
+          this.favLoading.set(false);
+        },
+        error: () => this.favLoading.set(false),
       });
   }
 }

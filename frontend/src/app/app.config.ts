@@ -32,6 +32,13 @@ import {
   CloudDownloadOutline,
   EyeOutline,
   EyeInvisibleOutline,
+  ShoppingCartOutline,
+  HeartOutline,
+  HeartFill,
+  StarOutline,
+  StarFill,
+  PictureOutline,
+  MessageOutline,
 } from '@ant-design/icons-angular/icons';
 
 registerLocaleData(zh);
@@ -66,6 +73,13 @@ export const appConfig: ApplicationConfig = {
       CloudDownloadOutline,
       EyeOutline,
       EyeInvisibleOutline,
+      ShoppingCartOutline,
+      HeartOutline,
+      HeartFill,
+      StarOutline,
+      StarFill,
+      PictureOutline,
+      MessageOutline,
     ]),
     provideHttpClient(withInterceptors([authInterceptor])),
   ],

@@ -17,6 +17,10 @@ export class GoodsCard {
     const url = imageUrl(this.goods().cover_image);
     return url || '/goods-default.svg';
   });
+  readonly avatar = computed(() => {
+    const url = imageUrl(this.goods().avatar);
+    return url || '/avatar-default.svg';
+  });
   readonly conditionText = conditionText;
   readonly goodsStatusText = goodsStatusText;
   readonly goodsStatusColor = goodsStatusColor;

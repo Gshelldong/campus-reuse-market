@@ -1,13 +1,11 @@
 import { Component, OnDestroy, computed, inject, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { MatButtonModule } from '@angular/material/button';
-import { MatCardModule } from '@angular/material/card';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatIconModule } from '@angular/material/icon';
-import { MatInputModule } from '@angular/material/input';
-import { MatSelectModule } from '@angular/material/select';
-import { MatSnackBar } from '@angular/material/snack-bar';
+import { NzButtonModule } from 'ng-zorro-antd/button';
+import { NzImageModule } from 'ng-zorro-antd/image';
+import { NzSelectModule } from 'ng-zorro-antd/select';
+import { NzIconModule } from 'ng-zorro-antd/icon';
+import { NzInputModule } from 'ng-zorro-antd/input';
+import { NzMessageService } from 'ng-zorro-antd/message';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Subject, takeUntil } from 'rxjs';
@@ -19,14 +17,12 @@ import { GoodsService } from '../../core/services/goods.service';
 @Component({
   selector: 'app-publish',
   imports: [
-    CommonModule,
     ReactiveFormsModule,
-    MatCardModule,
-    MatFormFieldModule,
-    MatInputModule,
-    MatSelectModule,
-    MatButtonModule,
-    MatIconModule,
+    NzButtonModule,
+    NzImageModule,
+    NzSelectModule,
+    NzIconModule,
+    NzInputModule,
     RouterLink,
   ],
   templateUrl: './publish.html',
@@ -36,7 +32,7 @@ export class PublishPage implements OnDestroy {
   private fb = inject(NonNullableFormBuilder);
   private goodsService = inject(GoodsService);
   private categoryService = inject(CategoryService);
-  private snackBar = inject(MatSnackBar);
+  private message = inject(NzMessageService);
   private router = inject(Router);
   private route = inject(ActivatedRoute);
   private destroy$ = new Subject<void>();
@@ -88,7 +84,7 @@ export class PublishPage implements OnDestroy {
             this.loading.set(false);
           },
           error: () => {
-            this.snackBar.open('商品不存在', '知道了', { duration: 2500 });
+            this.message.error('商品不存在');
             this.router.navigate(['/profile']);
           },
         });
@@ -154,7 +150,7 @@ export class PublishPage implements OnDestroy {
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: () => {
-          this.snackBar.open('发布成功，等待管理员审核', '知道了', { duration: 2500 });
+          this.message.success('发布成功，等待管理员审核');
           this.router.navigate(['/profile'], { queryParams: { tab: 'goods' } });
         },
         error: (err: HttpErrorResponse) => this.fail(err),
@@ -174,7 +170,7 @@ export class PublishPage implements OnDestroy {
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: () => {
-          this.snackBar.open('修改成功，已重新提交审核', '知道了', { duration: 2500 });
+          this.message.success('修改成功，已重新提交审核');
           this.router.navigate(['/profile'], { queryParams: { tab: 'goods' } });
         },
         error: (err: HttpErrorResponse) => this.fail(err),
@@ -183,6 +179,6 @@ export class PublishPage implements OnDestroy {
 
   private fail(err: HttpErrorResponse): void {
     this.submitting.set(false);
-    this.snackBar.open(err.error?.detail ?? '提交失败，请稍后再试', '知道了', { duration: 2500 });
+    this.message.error(err.error?.detail ?? '提交失败，请稍后再试');
   }
 }

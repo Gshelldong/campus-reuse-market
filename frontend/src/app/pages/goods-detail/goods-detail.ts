@@ -1,25 +1,33 @@
-import { Component, OnDestroy, computed, inject, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { MatButtonModule } from '@angular/material/button';
-import { MatCardModule } from '@angular/material/card';
-import { MatDialog } from '@angular/material/dialog';
-import { MatIconModule } from '@angular/material/icon';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatSnackBar } from '@angular/material/snack-bar';
+import { Component, OnDestroy, TemplateRef, computed, inject, signal, viewChild } from '@angular/core';
+import { DatePipe } from '@angular/common';
+import { NzButtonModule } from 'ng-zorro-antd/button';
+import { NzIconModule } from 'ng-zorro-antd/icon';
+import { NzSpinModule } from 'ng-zorro-antd/spin';
+import { NzModalModule, NzModalService } from 'ng-zorro-antd/modal';
+import { NzTagModule } from 'ng-zorro-antd/tag';
+import { NzMessageService } from 'ng-zorro-antd/message';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Subject, takeUntil } from 'rxjs';
-import { conditionText, goodsStatusText, imageUrl } from '../../core/api';
+import { conditionText, goodsStatusStyle, goodsStatusText, imageUrl } from '../../core/api';
 import { Category, Goods } from '../../core/models';
 import { AuthService } from '../../core/services/auth.service';
 import { CategoryService } from '../../core/services/category.service';
+import { ChatService } from '../../core/services/chat.service';
 import { FavoriteService } from '../../core/services/favorite.service';
 import { GoodsService } from '../../core/services/goods.service';
 import { OrderService } from '../../core/services/order.service';
-import { BuyConfirmDialog } from './buy-confirm-dialog';
 
 @Component({
   selector: 'app-goods-detail',
-  imports: [CommonModule, MatButtonModule, MatCardModule, MatIconModule, MatProgressSpinnerModule, RouterLink],
+  imports: [
+    DatePipe,
+    RouterLink,
+    NzButtonModule,
+    NzIconModule,
+    NzSpinModule,
+    NzModalModule,
+    NzTagModule,
+  ],
   templateUrl: './goods-detail.html',
   styleUrl: './goods-detail.css',
 })
@@ -30,10 +38,12 @@ export class GoodsDetailPage implements OnDestroy {
   private favoriteService = inject(FavoriteService);
   private orderService = inject(OrderService);
   private categoryService = inject(CategoryService);
+  private chatService = inject(ChatService);
   private auth = inject(AuthService);
-  private dialog = inject(MatDialog);
-  private snackBar = inject(MatSnackBar);
+  private modal = inject(NzModalService);
+  private message = inject(NzMessageService);
   private destroy$ = new Subject<void>();
+  private buyTpl = viewChild.required<TemplateRef<unknown>>('buyTpl');
 
   readonly goods = signal<Goods | null>(null);
   readonly loading = signal(true);
@@ -44,10 +54,10 @@ export class GoodsDetailPage implements OnDestroy {
   readonly img = imageUrl;
   readonly conditionText = conditionText;
   readonly goodsStatusText = goodsStatusText;
+  readonly goodsStatusStyle = goodsStatusStyle;
   readonly isLoggedIn = this.auth.isLoggedIn;
 
-  readonly images = computed(() => this.goods()?.images ?? []);
-  readonly currentImage = computed(() => {
+  readonly images = computed(() => this.goods()?.images ?? []);  readonly currentImage = computed(() => {
     const list = this.images();
     return list.length ? imageUrl(list[this.currentImageIndex()].image_url) : '/goods-default.svg';
   });
@@ -89,7 +99,7 @@ export class GoodsDetailPage implements OnDestroy {
         },
         error: () => {
           this.loading.set(false);
-          this.snackBar.open('商品不存在或已删除', '知道了', { duration: 2500 });
+          this.message.error('商品不存在或已删除');
           this.router.navigate(['/home']);
         },
       });
@@ -124,7 +134,7 @@ export class GoodsDetailPage implements OnDestroy {
         .pipe(takeUntil(this.destroy$))
         .subscribe(() => {
           this.favorited.set(false);
-          this.snackBar.open('已取消收藏', '知道了', { duration: 2000 });
+          this.message.info('已取消收藏');
         });
     } else {
       this.favoriteService
@@ -132,7 +142,7 @@ export class GoodsDetailPage implements OnDestroy {
         .pipe(takeUntil(this.destroy$))
         .subscribe(() => {
           this.favorited.set(true);
-          this.snackBar.open('收藏成功', '知道了', { duration: 2000 });
+          this.message.success('收藏成功');
         });
     }
   }
@@ -141,7 +151,19 @@ export class GoodsDetailPage implements OnDestroy {
     if (!this.requireLogin()) {
       return;
     }
-    this.router.navigate(['/chat'], { queryParams: { peer: this.goods()!.user_id } });
+    const goods = this.goods()!;
+    const link = `${location.origin}/goods/${goods.id}`;
+    this.chatService
+      .send(goods.user_id, `我正在看「${goods.title}」，商品链接：${link}`)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: () => this.openChat(goods.user_id),
+        error: () => this.openChat(goods.user_id),
+      });
+  }
+
+  private openChat(peerId: number): void {
+    this.router.navigate(['/chat'], { queryParams: { peer: peerId } });
   }
 
   buy(): void {
@@ -149,32 +171,36 @@ export class GoodsDetailPage implements OnDestroy {
       return;
     }
     const goods = this.goods()!;
-    this.dialog
-      .open(BuyConfirmDialog, { data: goods, width: '360px' })
-      .afterClosed()
-      .pipe(takeUntil(this.destroy$))
-      .subscribe((confirmed) => {
-        if (confirmed) {
-          this.orderService
-            .create(goods.id)
-            .pipe(takeUntil(this.destroy$))
-            .subscribe({
-              next: (res) => {
-                this.snackBar.open(`下单成功，订单号 ${res.order_no}`, '知道了', { duration: 3000 });
-                this.loadGoods(goods.id);
-                this.router.navigate(['/order']);
-              },
-              error: (err) => this.snackBar.open(err.error?.detail ?? '下单失败', '知道了', { duration: 2500 }),
-            });
-        }
-      });
+    this.modal.confirm({
+      nzTitle: '确认购买',
+      nzWidth: 400,
+      nzContent: this.buyTpl(),
+      nzOkText: '确认下单',
+      nzCancelText: '再想想',
+      nzOnOk: () => {
+        this.orderService
+          .create(goods.id)
+          .pipe(takeUntil(this.destroy$))
+          .subscribe({
+            next: (res) => {
+              this.loadGoods(goods.id);
+              this.modal.success({
+                nzTitle: '下单成功',
+                nzContent: `订单号 ${res.order_no}，请在个人中心 - 我的订单中查看详情`,
+                nzOkText: '确认',
+                nzOnOk: () => this.router.navigate(['/home']),
+              });
+            },
+            error: (err) => this.message.error(err.error?.detail ?? '下单失败'),
+          });
+      },
+    });
   }
 
   private requireLogin(): boolean {
     if (!this.auth.isLoggedIn()) {
-      this.snackBar.open('请先登录', '去登录', { duration: 2500 }).onAction().subscribe(() => {
-        this.router.navigate(['/login']);
-      });
+      this.message.warning('请先登录');
+      this.router.navigate(['/login'], { queryParams: { returnUrl: this.router.url } });
       return false;
     }
     return true;
