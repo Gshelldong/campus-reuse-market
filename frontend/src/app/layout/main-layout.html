@@ -2,8 +2,8 @@
   <div class="container-apple flex items-center justify-between" style="height: 64px;">
     <!-- 左侧：平台名称 + 首页 / 逛市场 -->
     <div class="flex items-center gap-10">
-      <a routerLink="/home" class="flex items-center gap-2 text-[19px] font-semibold tracking-tight" style="color: var(--color-text);">
-        <span nz-icon nzType="shop" nzTheme="filled" class="text-[22px]" style="color: var(--color-primary);"></span>
+      <a routerLink="/home" class="flex items-center gap-2.5 text-[19px] font-semibold tracking-tight" style="color: var(--color-text);">
+        <img src="img.png" class="logo-img" alt="logo" />
         <span>校园二手交易平台</span>
       </a>
       <nav class="hidden md:flex items-center gap-7">
@@ -13,32 +13,34 @@
           class="text-[15px] transition-colors duration-200 hover:text-[#0071e3]"
           style="color: var(--color-text-secondary);"
         >首页</a>
-        <a
-          routerLink="/home"
-          (click)="scrollToMarket()"
-          class="text-[15px] transition-colors duration-200 hover:text-[#0071e3]"
-          style="color: var(--color-text-secondary);"
-        >逛市场</a>
       </nav>
     </div>
 
-    <!-- 右侧：消息、联系我们、发布、头像 -->
+    <!-- 右侧：消息、联系我们、发布、头像（联系我们 / 发布 始终显示） -->
     <div class="flex items-center gap-5">
       @if (currentUser(); as user) {
-        <a routerLink="/chat" class="relative flex items-center justify-center w-9 h-9 rounded-full transition-colors duration-200 hover:bg-black/5" title="我的消息">
-          <span nz-icon nzType="bell" nzTheme="outline" class="text-[18px]" style="color: var(--color-text-secondary);"></span>
+        <a routerLink="/chat" class="message-icon-link relative flex items-center justify-center w-9 h-9 rounded-full transition-colors duration-200 hover:bg-black/5" title="我的消息">
+          <span nz-icon nzType="mail" nzTheme="outline" class="text-[19px]" style="color: var(--color-text-secondary);"></span>
           @if (unread() > 0) {
             <span class="absolute -top-0.5 -right-0.5 min-w-[17px] h-[17px] px-1 rounded-full text-[11px] leading-[17px] text-center text-white" style="background: var(--color-danger);">
               {{ unread() > 99 ? '99+' : unread() }}
             </span>
           }
         </a>
-        <a href="#contact" class="hidden sm:flex items-center text-[15px] transition-colors duration-200 hover:text-[#0071e3]" style="color: var(--color-text-secondary);">
-          联系我们
-        </a>
-        <button class="btn-primary !py-2 !px-5 !text-[14px]" routerLink="/publish">
-          <span nz-icon nzType="plus" class="mr-1 text-[13px]"></span>发布
-        </button>
+      }
+
+      <a class="hidden sm:flex items-center text-[15px] cursor-pointer transition-colors duration-200 hover:text-[#0071e3]"
+         style="color: var(--color-text-secondary);"
+         (click)="openContactModal()">
+        联系我们
+      </a>
+
+      <button class="publish-btn" (click)="onPublishClick()">
+        <span nz-icon nzType="plus" class="text-[13px]"></span>
+        <span>+ 发布</span>
+      </button>
+
+      @if (currentUser(); as user) {
         <a
           class="flex items-center gap-1.5 cursor-pointer"
           nz-dropdown
@@ -55,7 +57,7 @@
         </a>
       } @else {
         <a routerLink="/login" class="text-[15px] transition-colors duration-200 hover:text-[#0071e3]" style="color: var(--color-text-secondary);">登录</a>
-        <a routerLink="/register" class="btn-primary !py-2 !px-5 !text-[14px]">注册</a>
+        <a routerLink="/register" class="text-[15px] transition-colors duration-200 hover:text-[#0071e3]" style="color: var(--color-text-secondary);">注册</a>
       }
     </div>
   </div>
@@ -66,6 +68,49 @@
     <router-outlet />
   </div>
 </nz-content>
+
+<!-- 联系我们模态框 -->
+<nz-modal
+  [nzVisible]="contactVisible"
+  (nzOnCancel)="closeContact()"
+  nzTitle="联系我们"
+  [nzFooter]="null"
+  nzWidth="420px"
+  nzClosable="true"
+  [nzMaskClosable]="true"
+>
+  <ng-container *nzModalContent>
+    <div class="flex flex-col gap-5 py-2">
+      <div class="flex items-start gap-4">
+        <span class="flex items-center justify-center w-10 h-10 rounded-full shrink-0" style="background: rgba(0, 113, 227, 0.1);">
+          <span nz-icon nzType="mail" nzTheme="outline" style="color: var(--color-primary);"></span>
+        </span>
+        <div>
+          <p class="text-[13px] mb-0.5" style="color: var(--color-text-tertiary);">联系邮箱</p>
+          <p class="text-[15px] font-medium" style="color: var(--color-text);">support@campus-reuse.com</p>
+        </div>
+      </div>
+      <div class="flex items-start gap-4">
+        <span class="flex items-center justify-center w-10 h-10 rounded-full shrink-0" style="background: rgba(52, 199, 89, 0.1);">
+          <span nz-icon nzType="phone" nzTheme="outline" style="color: var(--color-success);"></span>
+        </span>
+        <div>
+          <p class="text-[13px] mb-0.5" style="color: var(--color-text-tertiary);">联系电话</p>
+          <p class="text-[15px] font-medium" style="color: var(--color-text);">400-888-6666</p>
+        </div>
+      </div>
+      <div class="flex items-start gap-4">
+        <span class="flex items-center justify-center w-10 h-10 rounded-full shrink-0" style="background: rgba(255, 149, 0, 0.1);">
+          <span nz-icon nzType="environment" nzTheme="outline" style="color: var(--color-warning);"></span>
+        </span>
+        <div>
+          <p class="text-[13px] mb-0.5" style="color: var(--color-text-tertiary);">公司地址</p>
+          <p class="text-[15px] font-medium leading-relaxed" style="color: var(--color-text);">北京市海淀区中关村大街 1 号科技大厦 12 层</p>
+        </div>
+      </div>
+    </div>
+  </ng-container>
+</nz-modal>
 
 <nz-dropdown-menu #userMenu="nzDropdownMenu">
   <ul nz-menu class="!rounded-xl overflow-hidden">

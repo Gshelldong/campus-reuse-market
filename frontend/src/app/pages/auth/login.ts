@@ -5,7 +5,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
-import { Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { AuthService } from '../../core/services/auth.service';
 
@@ -27,6 +27,7 @@ export class LoginPage {
   private fb = inject(NonNullableFormBuilder);
   private auth = inject(AuthService);
   private router = inject(Router);
+  private route = inject(ActivatedRoute);
 
   readonly hidePassword = signal(true);
   readonly errorMsg = signal('');
@@ -47,7 +48,12 @@ export class LoginPage {
     const { username, password } = this.form.getRawValue();
     this.auth.login(username, password).subscribe({
       next: (res) => {
-        this.router.navigate([res.user.role === 1 ? '/admin' : '/home']);
+        const returnUrl = this.route.snapshot.queryParamMap.get('returnUrl');
+        if (returnUrl && res.user.role !== 1) {
+          this.router.navigateByUrl(returnUrl);
+        } else {
+          this.router.navigate([res.user.role === 1 ? '/admin' : '/home']);
+        }
       },
       error: (err: HttpErrorResponse) => {
         this.loading.set(false);

@@ -4,6 +4,7 @@ import { NzMenuModule } from 'ng-zorro-antd/menu';
 import { NzDropDownModule } from 'ng-zorro-antd/dropdown';
 import { NzButtonModule } from 'ng-zorro-antd/button';
 import { NzIconModule } from 'ng-zorro-antd/icon';
+import { NzModalModule } from 'ng-zorro-antd/modal';
 import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { Subscription, interval, startWith, switchMap } from 'rxjs';
 import { imageUrl } from '../core/api';
@@ -21,6 +22,7 @@ import { ChatService } from '../core/services/chat.service';
     NzDropDownModule,
     NzButtonModule,
     NzIconModule,
+    NzModalModule,
   ],
   templateUrl: './main-layout.html',
   styleUrl: './main-layout.css',
@@ -34,6 +36,8 @@ export class MainLayout implements OnInit, OnDestroy {
   readonly isAdmin = this.auth.isAdmin;
   readonly unread = signal(0);
   readonly img = imageUrl;
+
+  contactVisible = false;
 
   private pollSub?: Subscription;
 
@@ -58,6 +62,23 @@ export class MainLayout implements OnInit, OnDestroy {
   logout(): void {
     this.auth.logout();
     this.router.navigate(['/login']);
+  }
+
+  /** 发布：未登录时跳转登录页 */
+  onPublishClick(): void {
+    if (this.currentUser()) {
+      this.router.navigate(['/publish']);
+    } else {
+      this.router.navigate(['/login'], { queryParams: { returnUrl: '/publish' } });
+    }
+  }
+
+  openContactModal(): void {
+    this.contactVisible = true;
+  }
+
+  closeContact(): void {
+    this.contactVisible = false;
   }
 
   scrollToMarket(): void {
