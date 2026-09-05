@@ -1,28 +1,28 @@
-<a [routerLink]="['/goods', goods().id]" class="card-link">
-  <mat-card class="goods-card">
-    <div class="cover">
-      <img [src]="cover()" [alt]="goods().title" loading="lazy" />
-      @if (showStatus() && goods().status !== 1) {
-        <span class="status-tag" [attr.data-color]="goodsStatusColor(goods().status)">
-          {{ goodsStatusText(goods().status) }}
-        </span>
+<a [routerLink]="['/goods', goods().id]" class="card-link product-card block">
+  <div class="cover relative overflow-hidden" style="border-radius: var(--radius-lg) var(--radius-lg) 0 0;">
+    <img [src]="cover()" [alt]="goods().title" loading="lazy"
+         class="w-full h-44 object-cover transition-transform duration-500" />
+    @if (showStatus() && goods().status !== 1) {
+      <span class="tag-apple absolute top-2.5 right-2.5 text-white" [style.background-color]="goodsStatusColor(goods().status)">
+        {{ goodsStatusText(goods().status) }}
+      </span>
+    }
+  </div>
+  <div class="p-4">
+    <p class="title text-[15px] font-medium mb-2 leading-snug" style="color: var(--color-text);"
+       [title]="goods().title">{{ goods().title }}</p>
+    <div class="flex items-baseline gap-2 mb-2.5">
+      <span class="price text-[20px]">¥{{ goods().price }}</span>
+      @if (goods().original_price) {
+        <span class="text-[13px] line-through" style="color: var(--color-text-tertiary);">¥{{ goods().original_price }}</span>
       }
     </div>
-    <mat-card-content>
-      <p class="title" [title]="goods().title">{{ goods().title }}</p>
-      <div class="price-row">
-        <span class="price">¥{{ goods().price }}</span>
-        @if (goods().original_price) {
-          <span class="original-price">¥{{ goods().original_price }}</span>
-        }
-      </div>
-      <div class="meta-row">
-        <span class="condition">{{ conditionText(goods().condition) }}</span>
-        <span class="seller">
-          <img class="seller-avatar" [src]="goods().avatar || '/avatar-default.svg'" alt="" />
-          {{ goods().nickname || '同学' }}
-        </span>
-      </div>
-    </mat-card-content>
-  </mat-card>
+    <div class="flex justify-between items-center text-[12px]" style="color: var(--color-text-secondary);">
+      <span class="tag-apple" style="background: var(--color-bg-secondary); color: var(--color-text-secondary);">{{ conditionText(goods().condition) }}</span>
+      <span class="flex items-center gap-1.5">
+        <img class="w-5 h-5 rounded-full object-cover" [src]="goods().avatar || '/avatar-default.svg'" alt="" />
+        {{ goods().nickname || '同学' }}
+      </span>
+    </div>
+  </div>
 </a>

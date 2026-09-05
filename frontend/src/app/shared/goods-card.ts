@@ -1,13 +1,11 @@
 import { Component, computed, input } from '@angular/core';
-import { MatCardModule } from '@angular/material/card';
-import { MatIconModule } from '@angular/material/icon';
 import { RouterLink } from '@angular/router';
 import { conditionText, goodsStatusColor, goodsStatusText, imageUrl } from '../core/api';
 import { GoodsListItem } from '../core/models';
 
 @Component({
   selector: 'app-goods-card',
-  imports: [MatCardModule, MatIconModule, RouterLink],
+  imports: [RouterLink],
   templateUrl: './goods-card.html',
   styleUrl: './goods-card.css',
 })

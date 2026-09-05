@@ -1,10 +1,9 @@
 import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
-import { MatButtonModule } from '@angular/material/button';
-import { MatIconModule } from '@angular/material/icon';
-import { MatBadgeModule } from '@angular/material/badge';
-import { MatMenuModule } from '@angular/material/menu';
-import { MatToolbarModule } from '@angular/material/toolbar';
-import { MatTooltipModule } from '@angular/material/tooltip';
+import { NzLayoutModule } from 'ng-zorro-antd/layout';
+import { NzMenuModule } from 'ng-zorro-antd/menu';
+import { NzDropDownModule } from 'ng-zorro-antd/dropdown';
+import { NzButtonModule } from 'ng-zorro-antd/button';
+import { NzIconModule } from 'ng-zorro-antd/icon';
 import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { Subscription, interval, startWith, switchMap } from 'rxjs';
 import { imageUrl } from '../core/api';
@@ -17,12 +16,11 @@ import { ChatService } from '../core/services/chat.service';
     RouterOutlet,
     RouterLink,
     RouterLinkActive,
-    MatToolbarModule,
-    MatIconModule,
-    MatButtonModule,
-    MatBadgeModule,
-    MatMenuModule,
-    MatTooltipModule,
+    NzLayoutModule,
+    NzMenuModule,
+    NzDropDownModule,
+    NzButtonModule,
+    NzIconModule,
   ],
   templateUrl: './main-layout.html',
   styleUrl: './main-layout.css',
@@ -60,5 +58,11 @@ export class MainLayout implements OnInit, OnDestroy {
   logout(): void {
     this.auth.logout();
     this.router.navigate(['/login']);
+  }
+
+  scrollToMarket(): void {
+    setTimeout(() => {
+      document.querySelector('.goods-grid')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 100);
   }
 }

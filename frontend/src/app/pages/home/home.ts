@@ -1,15 +1,11 @@
 import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { MatButtonModule } from '@angular/material/button';
-import { MatChipsModule } from '@angular/material/chips';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatIconModule } from '@angular/material/icon';
-import { MatInputModule } from '@angular/material/input';
-import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
-import { MatSelectModule } from '@angular/material/select';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatChipSelectionChange } from '@angular/material/chips';
-import { Subject, debounceTime, distinctUntilChanged, takeUntil } from 'rxjs';
+import { NzInputModule } from 'ng-zorro-antd/input';
+import { NzButtonModule } from 'ng-zorro-antd/button';
+import { NzPaginationModule } from 'ng-zorro-antd/pagination';
+import { NzSpinModule } from 'ng-zorro-antd/spin';
+import { NzIconModule } from 'ng-zorro-antd/icon';
+import { takeUntil } from 'rxjs';
 import { GoodsCard } from '../../shared/goods-card';
 import { Category, GoodsListItem, PageResult } from '../../core/models';
 import { CategoryService } from '../../core/services/category.service';
@@ -21,14 +17,11 @@ const PAGE_SIZE = 12;
   selector: 'app-home',
   imports: [
     FormsModule,
-    MatButtonModule,
-    MatChipsModule,
-    MatFormFieldModule,
-    MatIconModule,
-    MatInputModule,
-    MatPaginatorModule,
-    MatSelectModule,
-    MatProgressSpinnerModule,
+    NzInputModule,
+    NzButtonModule,
+    NzPaginationModule,
+    NzSpinModule,
+    NzIconModule,
     GoodsCard,
   ],
   templateUrl: './home.html',
@@ -45,7 +38,6 @@ export class HomePage implements OnInit, OnDestroy {
   readonly records = signal<GoodsListItem[]>([]);
 
   keyword = '';
-  private keyword$ = new Subject<string>();
 
   selectedCategoryId: number | null = null;
   orderBy = '';
@@ -54,14 +46,6 @@ export class HomePage implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.categoryService.list().subscribe((cats) => this.categories.set(cats));
-
-    this.keyword$
-      .pipe(debounceTime(400), distinctUntilChanged(), takeUntil(this.destroy$))
-      .subscribe(() => {
-        this.pageIndex = 0;
-        this.load();
-      });
-
     this.load();
   }
 
@@ -70,8 +54,9 @@ export class HomePage implements OnInit, OnDestroy {
     this.destroy$.complete();
   }
 
-  onSearchInput(value: string): void {
-    this.keyword$.next(value);
+  onSearch(): void {
+    this.pageIndex = 0;
+    this.load();
   }
 
   clearKeyword(): void {
@@ -82,22 +67,14 @@ export class HomePage implements OnInit, OnDestroy {
     }
   }
 
-  onChipSelect(id: number | null, event: MatChipSelectionChange): void {
-    if (!event.selected) {
-      return;
-    }
-    this.selectedCategoryId = id;
+  onChipSelect(id: number | null): void {
+    this.selectedCategoryId = id === this.selectedCategoryId ? null : id;
     this.pageIndex = 0;
     this.load();
   }
 
-  onOrderByChange(): void {
-    this.pageIndex = 0;
-    this.load();
-  }
-
-  onPageChange(event: PageEvent): void {
-    this.pageIndex = event.pageIndex;
+  onPageChange(pageIndex: number): void {
+    this.pageIndex = pageIndex;
     this.load();
   }
 
