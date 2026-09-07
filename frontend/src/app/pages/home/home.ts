@@ -13,6 +13,12 @@ import { GoodsService } from '../../core/services/goods.service';
 
 const PAGE_SIZE = 12;
 
+const SORT_OPTIONS = [
+  { value: '', label: '最新发布' },
+  { value: 'price_asc', label: '价格从低到高' },
+  { value: 'price_desc', label: '价格从高到低' },
+] as const;
+
 @Component({
   selector: 'app-home',
   imports: [
@@ -43,6 +49,7 @@ export class HomePage implements OnInit, OnDestroy {
   orderBy = '';
   pageIndex = 1;
   readonly pageSize = PAGE_SIZE;
+  readonly sortOptions = SORT_OPTIONS;
 
   ngOnInit(): void {
     this.categoryService.list().subscribe((cats) => this.categories.set(cats));
@@ -69,6 +76,12 @@ export class HomePage implements OnInit, OnDestroy {
 
   onChipSelect(id: number | null): void {
     this.selectedCategoryId = id === this.selectedCategoryId ? null : id;
+    this.pageIndex = 1;
+    this.load();
+  }
+
+  onSortChange(value: string): void {
+    this.orderBy = value;
     this.pageIndex = 1;
     this.load();
   }

@@ -21,6 +21,40 @@
   box-shadow: var(--shadow-sm);
 }
 
+/* 排序胶囊 */
+.sort-bar {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 24px;
+}
+
+.sort-chip {
+  height: 32px;
+  padding: 0 18px;
+  border-radius: 980px;
+  border: 1px solid var(--color-border);
+  background: #fff;
+  font-family: inherit;
+  font-size: 13px;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+
+.sort-chip:hover {
+  border-color: rgba(0, 113, 227, 0.45);
+  color: var(--color-primary);
+}
+
+.sort-chip.active {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  color: #fff;
+  font-weight: 500;
+}
+
 /* 页脚（与页面同底色，细分隔线过渡） */
 .site-footer {
   width: 100%;

@@ -33,7 +33,7 @@
   </div>
 
   <!-- 分类胶囊标签 -->
-  <div class="mb-8 flex flex-wrap justify-center gap-2.5">
+  <div class="mb-4 flex flex-wrap justify-center gap-2.5">
     <button
       class="tag-apple cursor-pointer border transition-all duration-200"
       [class.cat-active]="selectedCategoryId === null"
@@ -47,6 +47,17 @@
         [class.cat-idle]="selectedCategoryId !== cat.id"
         (click)="onChipSelect(cat.id)"
       >{{ cat.name }}</button>
+    }
+  </div>
+
+  <!-- 排序胶囊 -->
+  <div class="sort-bar">
+    @for (opt of sortOptions; track opt.value) {
+      <button
+        class="sort-chip"
+        [class.active]="orderBy === opt.value"
+        (click)="onSortChange(opt.value)"
+      >{{ opt.label }}</button>
     }
   </div>
 
