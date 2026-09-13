@@ -6,9 +6,9 @@ DB_USER = os.getenv("DB_USER", "root")
 DB_PASSWORD = os.getenv("DB_PASSWORD", "test123456")
 DB_NAME = os.getenv("DB_NAME", "campus_market")
 
-DATABASE_URL = f"mysql+pymysql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}?charset=utf8mb4"
+DATABASE_URL = f"mysql+aiomysql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}?charset=utf8mb4"
 
-JWT_SECRET = os.getenv("JWT_SECRET", "campus-reuse-market-secret-key")
+JWT_SECRET = os.getenv("JWT_SECRET", "campus-reuse-market-secret-key-2024")
 JWT_ALGORITHM = "HS256"
 JWT_EXPIRE_HOURS = 24 * 7
 

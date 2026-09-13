@@ -1,5 +1,8 @@
 from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy.orm import Session, joinedload
+from sqlalchemy import func
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.future import select
+from sqlalchemy.orm import selectinload
 
 from db import get_db
 from dependencies import get_current_user
@@ -11,81 +14,95 @@ router = APIRouter(prefix="/api/favorite", tags=["收藏"])
 
 
 @router.post("/{goods_id}")
-def add_favorite(
+async def add_favorite(
     goods_id: int,
     user: User = Depends(get_current_user),
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
 ):
-    goods = db.query(Goods).filter(Goods.id == goods_id, Goods.is_deleted == 0).first()
+    result = await db.execute(
+        select(Goods).where(Goods.id == goods_id, Goods.is_deleted == 0)
+    )
+    goods = result.scalar_one_or_none()
     if not goods:
         raise HTTPException(404, "商品不存在")
-    exists = (
-        db.query(UserFavorite)
-        .filter(UserFavorite.user_id == user.id, UserFavorite.goods_id == goods_id)
-        .first()
+    result = await db.execute(
+        select(UserFavorite).where(
+            UserFavorite.user_id == user.id, UserFavorite.goods_id == goods_id
+        )
     )
+    exists = result.scalar_one_or_none()
     if exists:
         return {"message": "已收藏过该商品"}
     db.add(UserFavorite(user_id=user.id, goods_id=goods_id))
-    db.commit()
+    await db.commit()
     return {"message": "收藏成功"}
 
 
 @router.delete("/{goods_id}")
-def cancel_favorite(
+async def cancel_favorite(
     goods_id: int,
     user: User = Depends(get_current_user),
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
 ):
-    favorite = (
-        db.query(UserFavorite)
-        .filter(UserFavorite.user_id == user.id, UserFavorite.goods_id == goods_id)
-        .first()
+    result = await db.execute(
+        select(UserFavorite).where(
+            UserFavorite.user_id == user.id, UserFavorite.goods_id == goods_id
+        )
     )
+    favorite = result.scalar_one_or_none()
     if not favorite:
         raise HTTPException(404, "未收藏该商品")
-    db.delete(favorite)
-    db.commit()
+    await db.delete(favorite)
+    await db.commit()
     return {"message": "已取消收藏"}
 
 
 @router.get("/check/{goods_id}")
-def check_favorite(
+async def check_favorite(
     goods_id: int,
     user: User = Depends(get_current_user),
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
 ):
-    exists = (
-        db.query(UserFavorite)
-        .filter(UserFavorite.user_id == user.id, UserFavorite.goods_id == goods_id)
-        .first()
+    result = await db.execute(
+        select(UserFavorite).where(
+            UserFavorite.user_id == user.id, UserFavorite.goods_id == goods_id
+        )
     )
+    exists = result.scalar_one_or_none()
     return {"favorited": exists is not None}
 
 
 @router.get("/my")
-def my_favorites(
+async def my_favorites(
     page: int = 1,
     page_size: int = 10,
     user: User = Depends(get_current_user),
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
 ):
-    query = db.query(UserFavorite).filter(UserFavorite.user_id == user.id)
-    total = query.count()
-    favorites = (
-        query.order_by(UserFavorite.create_time.desc())
+    count_result = await db.execute(
+        select(func.count()).select_from(UserFavorite).where(UserFavorite.user_id == user.id)
+    )
+    total = count_result.scalar_one()
+
+    favorites_result = await db.execute(
+        select(UserFavorite)
+        .where(UserFavorite.user_id == user.id)
+        .order_by(UserFavorite.create_time.desc())
         .offset((page - 1) * page_size)
         .limit(page_size)
-        .all()
     )
+    favorites = favorites_result.scalars().all()
+
     goods_ids = [f.goods_id for f in favorites]
-    goods_map = {
-        g.id: g
-        for g in db.query(Goods)
-        .options(joinedload(Goods.images))
-        .filter(Goods.id.in_(goods_ids))
-        .all()
-    }
+    goods_map = {}
+    if goods_ids:
+        goods_result = await db.execute(
+            select(Goods)
+            .options(selectinload(Goods.images))
+            .where(Goods.id.in_(goods_ids))
+        )
+        goods_map = {g.id: g for g in goods_result.scalars().all()}
+
     records = []
     for f in favorites:
         g = goods_map.get(f.goods_id)

@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy import or_
-from sqlalchemy.orm import Session
+from sqlalchemy import func, or_
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.future import select
 
 from db import get_db
 from dependencies import get_current_user
@@ -12,47 +13,53 @@ router = APIRouter(prefix="/api/chat", tags=["聊天"])
 
 
 @router.post("/message", response_model=MessageOut)
-def send_message(
+async def send_message(
     data: MessageCreate,
     user: User = Depends(get_current_user),
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
 ):
     if data.receiver_id == user.id:
         raise HTTPException(400, "不能给自己发消息")
-    receiver = db.query(User).filter(User.id == data.receiver_id, User.is_deleted == 0).first()
+    result = await db.execute(
+        select(User).where(User.id == data.receiver_id, User.is_deleted == 0)
+    )
+    receiver = result.scalar_one_or_none()
     if not receiver:
         raise HTTPException(404, "接收方不存在")
     msg = ChatMessage(sender_id=user.id, receiver_id=data.receiver_id, content=data.content)
     db.add(msg)
-    db.commit()
-    db.refresh(msg)
+    await db.commit()
+    await db.refresh(msg)
     return msg
 
 
 @router.get("/messages/{other_id}")
-def chat_history(
+async def chat_history(
     other_id: int,
     user: User = Depends(get_current_user),
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
 ):
-    other = db.query(User).filter(User.id == other_id, User.is_deleted == 0).first()
+    result = await db.execute(
+        select(User).where(User.id == other_id, User.is_deleted == 0)
+    )
+    other = result.scalar_one_or_none()
     if not other:
         raise HTTPException(404, "用户不存在")
-    messages = (
-        db.query(ChatMessage)
-        .filter(
+    messages_result = await db.execute(
+        select(ChatMessage)
+        .where(
             or_(
                 (ChatMessage.sender_id == user.id) & (ChatMessage.receiver_id == other_id),
                 (ChatMessage.sender_id == other_id) & (ChatMessage.receiver_id == user.id),
             )
         )
         .order_by(ChatMessage.create_time)
-        .all()
     )
+    messages = messages_result.scalars().all()
     unread = [m for m in messages if m.receiver_id == user.id and m.is_read == 0]
     for m in unread:
         m.is_read = 1
-    db.commit()
+    await db.commit()
     return [
         {
             "id": m.id,
@@ -68,16 +75,16 @@ def chat_history(
 
 
 @router.get("/conversations")
-def my_conversations(
+async def my_conversations(
     user: User = Depends(get_current_user),
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
 ):
-    messages = (
-        db.query(ChatMessage)
-        .filter(or_(ChatMessage.sender_id == user.id, ChatMessage.receiver_id == user.id))
+    messages_result = await db.execute(
+        select(ChatMessage)
+        .where(or_(ChatMessage.sender_id == user.id, ChatMessage.receiver_id == user.id))
         .order_by(ChatMessage.create_time.desc())
-        .all()
     )
+    messages = messages_result.scalars().all()
     conv_map: dict[int, dict] = {}
     unread_map: dict[int, int] = {}
     for m in messages:
@@ -92,12 +99,11 @@ def my_conversations(
                 unread_map[other_id] = 1
     if not conv_map:
         return []
-    users = {
-        u.id: u
-        for u in db.query(User)
-        .filter(User.id.in_(list(conv_map.keys())), User.is_deleted == 0)
-        .all()
-    }
+    users_result = await db.execute(
+        select(User)
+        .where(User.id.in_(list(conv_map.keys())), User.is_deleted == 0)
+    )
+    users = {u.id: u for u in users_result.scalars().all()}
     return [
         {
             "user_id": uid,
@@ -113,10 +119,10 @@ def my_conversations(
 
 
 @router.get("/unread/count")
-def unread_count(user: User = Depends(get_current_user), db: Session = Depends(get_db)):
-    count = (
-        db.query(ChatMessage)
-        .filter(ChatMessage.receiver_id == user.id, ChatMessage.is_read == 0)
-        .count()
+async def unread_count(user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+    count_result = await db.execute(
+        select(func.count())
+        .select_from(ChatMessage)
+        .where(ChatMessage.receiver_id == user.id, ChatMessage.is_read == 0)
     )
-    return {"count": count}
+    return {"count": count_result.scalar_one()}

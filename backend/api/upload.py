@@ -8,9 +8,9 @@ router = APIRouter(prefix="/api/upload", tags=["文件上传"])
 
 
 @router.post("/image")
-def upload_image(
+async def upload_image(
     file: UploadFile = File(...),
     user: User = Depends(get_current_user),
 ):
-    url = save_upload_file(file)
+    url = await save_upload_file(file)
     return {"url": url}

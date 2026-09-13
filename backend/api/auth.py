@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.future import select
 
 from db import get_db
 from models.user import User
@@ -10,8 +11,9 @@ router = APIRouter(prefix="/api/auth", tags=["认证"])
 
 
 @router.post("/register", response_model=UserOut)
-def register(data: RegisterRequest, db: Session = Depends(get_db)):
-    exists = db.query(User).filter(User.username == data.username).first()
+async def register(data: RegisterRequest, db: AsyncSession = Depends(get_db)):
+    result = await db.execute(select(User).where(User.username == data.username))
+    exists = result.scalar_one_or_none()
     if exists:
         raise HTTPException(400, "用户名已存在")
     user = User(
@@ -21,14 +23,15 @@ def register(data: RegisterRequest, db: Session = Depends(get_db)):
         phone=data.phone,
     )
     db.add(user)
-    db.commit()
-    db.refresh(user)
+    await db.commit()
+    await db.refresh(user)
     return user
 
 
 @router.post("/login", response_model=LoginResponse)
-def login(data: LoginRequest, db: Session = Depends(get_db)):
-    user = db.query(User).filter(User.username == data.username).first()
+async def login(data: LoginRequest, db: AsyncSession = Depends(get_db)):
+    result = await db.execute(select(User).where(User.username == data.username))
+    user = result.scalar_one_or_none()
     if not user or not verify_password(data.password, user.password):
         raise HTTPException(400, "用户名或密码错误")
     if user.is_deleted == 1:

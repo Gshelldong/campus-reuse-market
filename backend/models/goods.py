@@ -34,7 +34,7 @@ class Goods(Base):
     is_deleted: Mapped[int] = mapped_column(SmallInteger, default=0)
 
     images: Mapped[list["GoodsImage"]] = relationship(
-        order_by="GoodsImage.sort", cascade="all, delete-orphan"
+        order_by="GoodsImage.sort", cascade="all, delete-orphan", lazy="selectin"
     )
 
 

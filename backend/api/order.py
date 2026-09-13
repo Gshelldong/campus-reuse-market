@@ -2,7 +2,10 @@ import uuid
 from datetime import datetime
 
 from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy.orm import Session, joinedload
+from sqlalchemy import func, or_
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.future import select
+from sqlalchemy.orm import selectinload
 
 from db import get_db
 from dependencies import get_current_admin, get_current_user
@@ -33,38 +36,48 @@ def _order_to_dict(order: Order, goods_map: dict, user_map: dict) -> dict:
     }
 
 
-def _build_orders(db: Session, query, page: int, page_size: int):
-    total = query.count()
-    orders = (
-        query.order_by(Order.create_time.desc())
+async def _build_orders(db: AsyncSession, base_stmt, page: int, page_size: int):
+    count_result = await db.execute(
+        select(func.count()).select_from(base_stmt.subquery())
+    )
+    total = count_result.scalar_one()
+
+    orders_result = await db.execute(
+        base_stmt.order_by(Order.create_time.desc())
         .offset((page - 1) * page_size)
         .limit(page_size)
-        .all()
     )
-    goods_map = {
-        g.id: g
-        for g in db.query(Goods)
-        .options(joinedload(Goods.images))
-        .filter(Goods.id.in_([o.goods_id for o in orders]))
-        .all()
-    }
+    orders = orders_result.scalars().all()
+
+    goods_map = {}
+    if orders:
+        goods_result = await db.execute(
+            select(Goods)
+            .options(selectinload(Goods.images))
+            .where(Goods.id.in_([o.goods_id for o in orders]))
+        )
+        goods_map = {g.id: g for g in goods_result.scalars().all()}
+
     user_ids = {o.seller_id for o in orders} | {o.buyer_id for o in orders}
-    user_map = {u.id: u for u in db.query(User).filter(User.id.in_(user_ids)).all()}
+    user_map = {}
+    if user_ids:
+        users_result = await db.execute(select(User).where(User.id.in_(user_ids)))
+        user_map = {u.id: u for u in users_result.scalars().all()}
+
     records = [_order_to_dict(o, goods_map, user_map) for o in orders]
     return {"total": total, "page": page, "page_size": page_size, "records": records}
 
 
 @router.post("/{goods_id}")
-def create_order(
+async def create_order(
     goods_id: int,
     user: User = Depends(get_current_user),
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
 ):
-    goods = (
-        db.query(Goods)
-        .filter(Goods.id == goods_id, Goods.is_deleted == 0)
-        .first()
+    result = await db.execute(
+        select(Goods).where(Goods.id == goods_id, Goods.is_deleted == 0)
     )
+    goods = result.scalar_one_or_none()
     if not goods:
         raise HTTPException(404, "商品不存在")
     if goods.status != 1:
@@ -81,36 +94,39 @@ def create_order(
     )
     goods.status = 2  # 已售出
     db.add(order)
-    db.commit()
-    db.refresh(order)
+    await db.commit()
+    await db.refresh(order)
     return {"message": "下单成功", "order_id": order.id, "order_no": order.order_no}
 
 
 @router.get("/my")
-def my_orders(
+async def my_orders(
     page: int = 1,
     page_size: int = 10,
     role: str = "all",
     user: User = Depends(get_current_user),
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
 ):
-    query = db.query(Order).filter(Order.is_deleted == 0)
+    stmt = select(Order).where(Order.is_deleted == 0)
     if role == "buyer":
-        query = query.filter(Order.buyer_id == user.id)
+        stmt = stmt.where(Order.buyer_id == user.id)
     elif role == "seller":
-        query = query.filter(Order.seller_id == user.id)
+        stmt = stmt.where(Order.seller_id == user.id)
     else:
-        query = query.filter((Order.buyer_id == user.id) | (Order.seller_id == user.id))
-    return _build_orders(db, query, page, page_size)
+        stmt = stmt.where(or_(Order.buyer_id == user.id, Order.seller_id == user.id))
+    return await _build_orders(db, stmt, page, page_size)
 
 
 @router.put("/{order_id}/confirm")
-def confirm_order(
+async def confirm_order(
     order_id: int,
     user: User = Depends(get_current_user),
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
 ):
-    order = db.query(Order).filter(Order.id == order_id, Order.is_deleted == 0).first()
+    result = await db.execute(
+        select(Order).where(Order.id == order_id, Order.is_deleted == 0)
+    )
+    order = result.scalar_one_or_none()
     if not order:
         raise HTTPException(404, "订单不存在")
     if order.buyer_id != user.id and order.seller_id != user.id:
@@ -118,17 +134,20 @@ def confirm_order(
     if order.status != 0:
         raise HTTPException(400, "订单状态不允许确认")
     order.status = 1
-    db.commit()
+    await db.commit()
     return {"message": "交易完成"}
 
 
 @router.put("/{order_id}/cancel")
-def cancel_order(
+async def cancel_order(
     order_id: int,
     user: User = Depends(get_current_user),
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
 ):
-    order = db.query(Order).filter(Order.id == order_id, Order.is_deleted == 0).first()
+    result = await db.execute(
+        select(Order).where(Order.id == order_id, Order.is_deleted == 0)
+    )
+    order = result.scalar_one_or_none()
     if not order:
         raise HTTPException(404, "订单不存在")
     if order.buyer_id != user.id and order.seller_id != user.id:
@@ -136,24 +155,25 @@ def cancel_order(
     if order.status != 0:
         raise HTTPException(400, "订单状态不允许取消")
     order.status = 2
-    goods = db.query(Goods).filter(Goods.id == order.goods_id).first()
+    goods_result = await db.execute(select(Goods).where(Goods.id == order.goods_id))
+    goods = goods_result.scalar_one_or_none()
     if goods:
         goods.status = 1  # 取消订单后商品重新上架
-    db.commit()
+    await db.commit()
     return {"message": "订单已取消，商品重新上架"}
 
 
 # ---------- 管理员 ----------
 
 @router.get("/admin/list")
-def admin_list_orders(
+async def admin_list_orders(
     page: int = 1,
     page_size: int = 10,
     status: int | None = None,
     admin: User = Depends(get_current_admin),
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
 ):
-    query = db.query(Order).filter(Order.is_deleted == 0)
+    stmt = select(Order).where(Order.is_deleted == 0)
     if status is not None:
-        query = query.filter(Order.status == status)
-    return _build_orders(db, query, page, page_size)
+        stmt = stmt.where(Order.status == status)
+    return await _build_orders(db, stmt, page, page_size)

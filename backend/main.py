@@ -4,12 +4,13 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from sqlalchemy import create_engine, text
+from sqlalchemy import create_engine, func, text
+from sqlalchemy.future import select
 
 import api
 import models  # noqa: F401 确保 ORM 模型注册
 from config import DB_NAME, DB_PASSWORD, DB_HOST, DB_PORT, DB_USER, UPLOAD_DIR, DATABASE_URL
-from db import Base, SessionLocal, engine
+from db import Base, AsyncSessionLocal, async_engine
 from models.user import User
 from models.category import Category
 from utils.security import hash_password
@@ -17,7 +18,7 @@ from utils.security import hash_password
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    init_db()
+    await init_db()
     yield
 
 
@@ -38,8 +39,8 @@ os.makedirs(UPLOAD_DIR, exist_ok=True)
 app.mount("/uploads", StaticFiles(directory=UPLOAD_DIR), name="uploads")
 
 
-def init_db():
-    # MySQL 需先建库再建表
+async def init_db():
+    # MySQL 需先建库再建表（建库操作仍用同步引擎，一次性执行）
     server_url = f"mysql+pymysql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/?charset=utf8mb4"
     server_engine = create_engine(server_url)
     with server_engine.connect() as conn:
@@ -47,24 +48,25 @@ def init_db():
         conn.commit()
     server_engine.dispose()
 
-    Base.metadata.create_all(engine)
+    async with async_engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
 
-    db = SessionLocal()
-    try:
-        if not db.query(User).filter(User.username == "admin").first():
+    async with AsyncSessionLocal() as db:
+        result = await db.execute(select(User).where(User.username == "admin"))
+        if not result.scalar_one_or_none():
             db.add(User(username="admin", password=hash_password("admin123"), nickname="管理员", role=1))
-        if not db.query(User).filter(User.username == "test").first():
+        result = await db.execute(select(User).where(User.username == "test"))
+        if not result.scalar_one_or_none():
             db.add(User(username="test", password=hash_password("123456"), nickname="测试学生"))
-        if db.query(Category).count() == 0:
+        count_result = await db.execute(select(func.count()).select_from(Category))
+        if count_result.scalar_one() == 0:
             for i, name in enumerate(["书籍教材", "数码产品", "服饰鞋包", "生活用品", "运动健身", "其他"], 1):
                 db.add(Category(name=name, sort=i))
-        db.commit()
-    finally:
-        db.close()
+        await db.commit()
 
 
 @app.get("/")
-def root():
+async def root():
     return {"message": "校园二手交易平台 API 运行中", "docs": "/docs"}
 
 

@@ -1,8 +1,10 @@
 from decimal import Decimal
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
-from sqlalchemy import or_
-from sqlalchemy.orm import Session, joinedload
+from sqlalchemy import func, or_
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.future import select
+from sqlalchemy.orm import selectinload
 
 from db import get_db
 from dependencies import get_current_admin, get_current_user
@@ -15,44 +17,62 @@ from utils.file import save_upload_file
 router = APIRouter(prefix="/api/goods", tags=["商品"])
 
 
-def _get_goods_or_404(db: Session, goods_id: int) -> Goods:
-    goods = (
-        db.query(Goods)
-        .options(joinedload(Goods.images))
-        .filter(Goods.id == goods_id, Goods.is_deleted == 0)
-        .first()
+async def _get_goods_or_404(db: AsyncSession, goods_id: int) -> Goods:
+    result = await db.execute(
+        select(Goods)
+        .where(Goods.id == goods_id, Goods.is_deleted == 0)
+        .options(selectinload(Goods.images))
     )
+    goods = result.scalar_one_or_none()
     if not goods:
-        raise HTTPException(404, "商品不存在")
+        raise HTTPException(status_code=404, detail="商品不存在")
     return goods
 
 
-def _build_list_items(db: Session, query, page: int, page_size: int, order_by: str | None = None):
-    total = query.count()
+async def _build_list_items(
+    db: AsyncSession,
+    base_query,
+    page: int,
+    page_size: int,
+    order_by: str | None = None,
+):
+    count_result = await db.execute(
+        select(func.count()).select_from(base_query.subquery())
+    )
+    total = count_result.scalar_one()
+
     order_cols = {
         "price_asc": Goods.price.asc(),
         "price_desc": Goods.price.desc(),
     }
     col = order_cols.get(order_by, Goods.create_time.desc())
-    rows = (
-        query.order_by(col)
+
+    rows_result = await db.execute(
+        base_query.order_by(col)
         .offset((page - 1) * page_size)
         .limit(page_size)
-        .all()
     )
+    rows = rows_result.scalars().all()
+
     goods_ids = [g.id for g in rows]
     cover_map = {}
     if goods_ids:
-        covers = (
-            db.query(GoodsImage.goods_id, GoodsImage.image_url)
-            .filter(GoodsImage.goods_id.in_(goods_ids))
+        covers_result = await db.execute(
+            select(GoodsImage.goods_id, GoodsImage.image_url)
+            .where(GoodsImage.goods_id.in_(goods_ids))
             .order_by(GoodsImage.sort)
-            .all()
         )
-        for goods_id, url in covers:
+        for goods_id, url in covers_result.all():
             cover_map.setdefault(goods_id, url)
+
     seller_ids = {g.user_id for g in rows}
-    sellers = {u.id: u for u in db.query(User).filter(User.id.in_(seller_ids)).all()}
+    sellers = {}
+    if seller_ids:
+        sellers_result = await db.execute(
+            select(User).where(User.id.in_(seller_ids))
+        )
+        sellers = {u.id: u for u in sellers_result.scalars().all()}
+
     records = []
     for g in rows:
         seller = sellers.get(g.user_id)
@@ -75,43 +95,44 @@ def _build_list_items(db: Session, query, page: int, page_size: int, order_by: s
     return {"total": total, "page": page, "page_size": page_size, "records": records}
 
 
-def _apply_filters(query, keyword: str | None, category_id: int | None, status: int | None):
+def _apply_filters(base_stmt, keyword: str | None, category_id: int | None, status: int | None):
+    stmt = base_stmt
     if keyword:
-        query = query.filter(or_(Goods.title.contains(keyword), Goods.description.contains(keyword)))
+        stmt = stmt.where(or_(Goods.title.contains(keyword), Goods.description.contains(keyword)))
     if category_id:
-        query = query.filter(Goods.category_id == category_id)
+        stmt = stmt.where(Goods.category_id == category_id)
     if status is not None:
-        query = query.filter(Goods.status == status)
-    return query
+        stmt = stmt.where(Goods.status == status)
+    return stmt
 
 
 @router.get("")
-def list_goods(
+async def list_goods(
     page: int = 1,
     page_size: int = 10,
     keyword: str | None = None,
     category_id: int | None = None,
     order_by: str | None = None,
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
 ):
-    query = db.query(Goods).filter(Goods.is_deleted == 0, Goods.status == 1)
-    query = _apply_filters(query, keyword, category_id, None)
-    return _build_list_items(db, query, page, page_size, order_by)
+    stmt = select(Goods).where(Goods.is_deleted == 0, Goods.status == 1)
+    stmt = _apply_filters(stmt, keyword, category_id, None)
+    return await _build_list_items(db, stmt, page, page_size, order_by)
 
 
 @router.get("/my")
-def my_published(
+async def my_published(
     page: int = 1,
     page_size: int = 10,
     user: User = Depends(get_current_user),
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
 ):
-    query = db.query(Goods).filter(Goods.is_deleted == 0, Goods.user_id == user.id)
-    return _build_list_items(db, query, page, page_size)
+    stmt = select(Goods).where(Goods.is_deleted == 0, Goods.user_id == user.id)
+    return await _build_list_items(db, stmt, page, page_size)
 
 
 @router.post("", response_model=GoodsOut)
-def publish_goods(
+async def publish_goods(
     title: str = Form(...),
     description: str = Form(""),
     price: Decimal = Form(...),
@@ -120,9 +141,12 @@ def publish_goods(
     category_id: int = Form(...),
     images: list[UploadFile] = File(default=[]),
     user: User = Depends(get_current_user),
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
 ):
-    if not db.query(Category).filter(Category.id == category_id, Category.is_deleted == 0).first():
+    cat_result = await db.execute(
+        select(Category).where(Category.id == category_id, Category.is_deleted == 0)
+    )
+    if not cat_result.scalar_one_or_none():
         raise HTTPException(400, "分类不存在")
     goods = Goods(
         user_id=user.id,
@@ -135,93 +159,97 @@ def publish_goods(
         status=0,
     )
     db.add(goods)
-    db.flush()
+    await db.flush()
     for idx, img in enumerate(images):
-        url = save_upload_file(img)
-        goods.images.append(GoodsImage(goods_id=goods.id, image_url=url, sort=idx))
-    db.commit()
-    db.refresh(goods)
-    return goods
+        url = await save_upload_file(img)
+        db.add(GoodsImage(goods_id=goods.id, image_url=url, sort=idx))
+    await db.commit()
+    # 异步模式下不能懒加载关联对象，重新查询以加载 images
+    return await _get_goods_or_404(db, goods.id)
 
 
 @router.get("/{goods_id}", response_model=GoodsOut)
-def goods_detail(goods_id: int, db: Session = Depends(get_db)):
-    return _get_goods_or_404(db, goods_id)
+async def goods_detail(goods_id: int, db: AsyncSession = Depends(get_db)):
+    return await _get_goods_or_404(db, goods_id)
 
 
 @router.put("/{goods_id}")
-def update_goods(
+async def update_goods(
     goods_id: int,
     data: GoodsUpdate,
     user: User = Depends(get_current_user),
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
 ):
-    goods = _get_goods_or_404(db, goods_id)
+    goods = await _get_goods_or_404(db, goods_id)
     if goods.user_id != user.id and user.role != 1:
         raise HTTPException(403, "只能编辑自己发布的商品")
-    if data.category_id and not db.query(Category).filter(Category.id == data.category_id).first():
-        raise HTTPException(400, "分类不存在")
+    if data.category_id:
+        cat_result = await db.execute(
+            select(Category).where(Category.id == data.category_id)
+        )
+        if not cat_result.scalar_one_or_none():
+            raise HTTPException(400, "分类不存在")
     for field, value in data.model_dump(exclude_none=True).items():
         setattr(goods, field, value)
     goods.status = 0  # 重新编辑后需再次审核
-    db.commit()
+    await db.commit()
     return {"message": "修改成功，已重新提交审核"}
 
 
 @router.delete("/{goods_id}")
-def delete_goods(
+async def delete_goods(
     goods_id: int,
     user: User = Depends(get_current_user),
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
 ):
-    goods = _get_goods_or_404(db, goods_id)
+    goods = await _get_goods_or_404(db, goods_id)
     if goods.user_id != user.id and user.role != 1:
         raise HTTPException(403, "只能删除自己发布的商品")
     goods.is_deleted = 1
     goods.status = 3
-    db.commit()
+    await db.commit()
     return {"message": "已删除"}
 
 
 @router.put("/{goods_id}/offline")
-def offline_goods(
+async def offline_goods(
     goods_id: int,
     user: User = Depends(get_current_user),
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
 ):
-    goods = _get_goods_or_404(db, goods_id)
+    goods = await _get_goods_or_404(db, goods_id)
     if goods.user_id != user.id and user.role != 1:
         raise HTTPException(403, "无权操作")
     goods.status = 3
-    db.commit()
+    await db.commit()
     return {"message": "已下架"}
 
 
 # ---------- 管理员 ----------
 
 @router.get("/admin/list")
-def admin_list_goods(
+async def admin_list_goods(
     page: int = 1,
     page_size: int = 10,
     keyword: str | None = None,
     category_id: int | None = None,
     status: int | None = None,
     admin: User = Depends(get_current_admin),
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
 ):
-    query = db.query(Goods).filter(Goods.is_deleted == 0)
-    query = _apply_filters(query, keyword, category_id, status)
-    return _build_list_items(db, query, page, page_size)
+    stmt = select(Goods).where(Goods.is_deleted == 0)
+    stmt = _apply_filters(stmt, keyword, category_id, status)
+    return await _build_list_items(db, stmt, page, page_size)
 
 
 @router.put("/admin/{goods_id}/audit")
-def audit_goods(
+async def audit_goods(
     goods_id: int,
     approved: bool,
     admin: User = Depends(get_current_admin),
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
 ):
-    goods = _get_goods_or_404(db, goods_id)
+    goods = await _get_goods_or_404(db, goods_id)
     goods.status = 1 if approved else 3
-    db.commit()
+    await db.commit()
     return {"message": "审核通过，商品已上架" if approved else "审核拒绝，商品已下架", "status": goods.status}

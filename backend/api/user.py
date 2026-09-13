@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.future import select
 
 from db import get_db
 from dependencies import get_current_admin, get_current_user
@@ -11,15 +12,15 @@ router = APIRouter(prefix="/api/user", tags=["用户"])
 
 
 @router.get("/me", response_model=UserOut)
-def get_me(user: User = Depends(get_current_user)):
+async def get_me(user: User = Depends(get_current_user)):
     return user
 
 
 @router.put("/me", response_model=UserOut)
-def update_me(
+async def update_me(
     data: UserUpdateRequest,
     user: User = Depends(get_current_user),
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
 ):
     if data.nickname is not None:
         user.nickname = data.nickname
@@ -27,40 +28,44 @@ def update_me(
         user.phone = data.phone
     if data.avatar is not None:
         user.avatar = data.avatar
-    db.commit()
-    db.refresh(user)
+    await db.commit()
+    await db.refresh(user)
     return user
 
 
 @router.put("/password")
-def update_password(
+async def update_password(
     data: PasswordUpdateRequest,
     user: User = Depends(get_current_user),
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
 ):
     if not verify_password(data.old_password, user.password):
         raise HTTPException(400, "原密码错误")
     user.password = hash_password(data.new_password)
-    db.commit()
+    await db.commit()
     return {"message": "密码修改成功"}
 
 
 # ---------- 管理员 ----------
 
 @router.get("/list", response_model=list[UserOut])
-def list_users(admin: User = Depends(get_current_admin), db: Session = Depends(get_db)):
-    return db.query(User).filter(User.is_deleted == 0, User.role == 0).order_by(User.id.desc()).all()
+async def list_users(admin: User = Depends(get_current_admin), db: AsyncSession = Depends(get_db)):
+    result = await db.execute(
+        select(User).where(User.is_deleted == 0, User.role == 0).order_by(User.id.desc())
+    )
+    return result.scalars().all()
 
 
 @router.put("/{user_id}/status")
-def toggle_user_status(
+async def toggle_user_status(
     user_id: int,
     admin: User = Depends(get_current_admin),
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
 ):
-    target = db.query(User).filter(User.id == user_id, User.is_deleted == 0).first()
+    result = await db.execute(select(User).where(User.id == user_id, User.is_deleted == 0))
+    target = result.scalar_one_or_none()
     if not target:
         raise HTTPException(404, "用户不存在")
     target.status = 0 if target.status == 1 else 1
-    db.commit()
+    await db.commit()
     return {"message": "操作成功", "status": target.status}
