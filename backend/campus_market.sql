@@ -11,7 +11,7 @@
  Target Server Version : 80046 (8.0.46)
  File Encoding         : 65001
 
- Date: 05/09/2026 21:27:44
+ Date: 14/09/2026 20:44:00
 */
 
 SET NAMES utf8mb4;
@@ -29,7 +29,7 @@ CREATE TABLE `category`  (
   `update_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `is_deleted` smallint NOT NULL,
   PRIMARY KEY (`id`) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 7 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = Dynamic;
+) ENGINE = InnoDB AUTO_INCREMENT = 8 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = Dynamic;
 
 -- ----------------------------
 -- Records of category
@@ -39,7 +39,8 @@ INSERT INTO `category` VALUES (2, '数码产品', 2, '2026-09-04 22:36:30', '202
 INSERT INTO `category` VALUES (3, '服饰鞋包', 3, '2026-09-04 22:36:30', '2026-09-04 22:36:30', 0);
 INSERT INTO `category` VALUES (4, '生活用品', 4, '2026-09-04 22:36:30', '2026-09-04 22:36:30', 0);
 INSERT INTO `category` VALUES (5, '运动健身', 5, '2026-09-04 22:36:30', '2026-09-04 22:36:30', 0);
-INSERT INTO `category` VALUES (6, '其他', 6, '2026-09-04 22:36:30', '2026-09-04 22:36:30', 0);
+INSERT INTO `category` VALUES (6, '其他', 7, '2026-09-04 22:36:30', '2026-09-13 12:59:27', 0);
+INSERT INTO `category` VALUES (7, '乐器文创', 6, '2026-09-13 12:59:02', '2026-09-13 12:59:31', 0);
 
 -- ----------------------------
 -- Table structure for chat_message
@@ -57,7 +58,7 @@ CREATE TABLE `chat_message`  (
   INDEX `ix_chat_message_sender_id`(`sender_id` ASC) USING BTREE,
   CONSTRAINT `chat_message_ibfk_1` FOREIGN KEY (`sender_id`) REFERENCES `user` (`id`) ON DELETE RESTRICT ON UPDATE RESTRICT,
   CONSTRAINT `chat_message_ibfk_2` FOREIGN KEY (`receiver_id`) REFERENCES `user` (`id`) ON DELETE RESTRICT ON UPDATE RESTRICT
-) ENGINE = InnoDB AUTO_INCREMENT = 7 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = Dynamic;
+) ENGINE = InnoDB AUTO_INCREMENT = 13 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = Dynamic;
 
 -- ----------------------------
 -- Records of chat_message
@@ -68,6 +69,12 @@ INSERT INTO `chat_message` VALUES (3, 1, 3, 'jsjsjsj', 1, '2026-09-05 15:35:09')
 INSERT INTO `chat_message` VALUES (4, 1, 3, '123456', 1, '2026-09-05 15:35:14');
 INSERT INTO `chat_message` VALUES (5, 3, 1, '你好请问你的衣服怎么卖？', 1, '2026-09-05 18:45:12');
 INSERT INTO `chat_message` VALUES (6, 3, 1, '我正在看「杯子」，商品链接：http://localhost:4200/goods/3', 1, '2026-09-05 19:39:57');
+INSERT INTO `chat_message` VALUES (7, 3, 1, '我正在看「缝纫机」，商品链接：http://localhost:4200/goods/5', 1, '2026-09-13 12:53:37');
+INSERT INTO `chat_message` VALUES (8, 3, 1, '我正在看「缝纫机」，商品链接：http://localhost:4200/goods/5', 1, '2026-09-13 12:53:38');
+INSERT INTO `chat_message` VALUES (9, 4, 1, '我正在看「缝纫机」，商品链接：http://localhost:4200/goods/5', 1, '2026-09-13 13:33:41');
+INSERT INTO `chat_message` VALUES (10, 4, 1, '你好请问还在吗？', 1, '2026-09-13 13:33:52');
+INSERT INTO `chat_message` VALUES (11, 1, 4, '还在的', 1, '2026-09-13 13:34:22');
+INSERT INTO `chat_message` VALUES (12, 4, 1, '那我直接下单了', 1, '2026-09-13 13:34:39');
 
 -- ----------------------------
 -- Table structure for goods
@@ -91,7 +98,7 @@ CREATE TABLE `goods`  (
   INDEX `ix_goods_user_id`(`user_id` ASC) USING BTREE,
   CONSTRAINT `goods_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `user` (`id`) ON DELETE RESTRICT ON UPDATE RESTRICT,
   CONSTRAINT `goods_ibfk_2` FOREIGN KEY (`category_id`) REFERENCES `category` (`id`) ON DELETE RESTRICT ON UPDATE RESTRICT
-) ENGINE = InnoDB AUTO_INCREMENT = 15 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = Dynamic;
+) ENGINE = InnoDB AUTO_INCREMENT = 26 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = Dynamic;
 
 -- ----------------------------
 -- Records of goods
@@ -100,16 +107,18 @@ INSERT INTO `goods` VALUES (1, 3, 2, '小米16', '8成新', 1800.01, 5600.00, 2,
 INSERT INTO `goods` VALUES (2, 1, 6, '哇哈哈', '饮料', 2.00, 8.80, 1, 2, '2026-09-05 14:39:37', '2026-09-05 19:40:30', 0);
 INSERT INTO `goods` VALUES (3, 1, 4, '杯子', '全新杯子', 2.00, 24.00, 2, 1, '2026-09-05 15:23:33', '2026-09-05 15:23:33', 0);
 INSERT INTO `goods` VALUES (4, 1, 4, '被子', '冬天盖的被子', 12.00, 80.56, 2, 1, '2026-09-05 15:24:15', '2026-09-05 15:24:15', 0);
-INSERT INTO `goods` VALUES (5, 1, 4, '缝纫机', '家传缝纫机', 100.00, 1999.00, 3, 1, '2026-09-05 15:24:57', '2026-09-05 15:24:57', 0);
+INSERT INTO `goods` VALUES (5, 1, 4, '缝纫机', '家传缝纫机', 100.00, 1999.00, 3, 2, '2026-09-05 15:24:57', '2026-09-13 13:35:30', 0);
 INSERT INTO `goods` VALUES (6, 1, 3, '衣服', '很新的衣服，10元一件很自提。', 20.00, 99.00, 2, 1, '2026-09-05 15:26:34', '2026-09-05 15:26:34', 0);
 INSERT INTO `goods` VALUES (7, 1, 4, '自行车', '自行车，很新，喜欢的交流。', 299.00, 3000.00, 2, 1, '2026-09-05 15:27:20', '2026-09-05 15:27:20', 0);
 INSERT INTO `goods` VALUES (8, 1, 4, '钟表', '祖传钟表，不喜勿扰。', 89.00, 254.00, 2, 2, '2026-09-05 15:27:52', '2026-09-05 21:03:53', 0);
-INSERT INTO `goods` VALUES (9, 3, 1, '各种书', '各种书10元1本自选！！！\r\n', 10.00, 99.00, 2, 1, '2026-09-05 18:32:44', '2026-09-05 18:34:10', 0);
-INSERT INTO `goods` VALUES (10, 3, 1, '大学物理', '物理书', 23.80, 64.00, 2, 1, '2026-09-05 18:33:11', '2026-09-05 18:34:10', 0);
+INSERT INTO `goods` VALUES (9, 3, 1, '各种书', '各种书10元1本自选！！！\r\n', 10.00, 99.00, 2, 3, '2026-09-05 18:32:44', '2026-09-13 12:59:49', 0);
+INSERT INTO `goods` VALUES (10, 3, 1, '大学物理', '物理书', 23.80, 64.00, 2, 3, '2026-09-05 18:33:11', '2026-09-13 12:52:30', 0);
 INSERT INTO `goods` VALUES (11, 3, 1, '高等数学', '数学', 50.00, 105.00, 2, 1, '2026-09-05 18:33:38', '2026-09-05 18:34:09', 0);
 INSERT INTO `goods` VALUES (12, 4, 5, '杠铃', '二手杠铃一套，成色实拍，正常使用无变形裂纹。\r\n家用健身够用，重量可调节，自提优先，诚心出。', 10.00, 58.00, 2, 1, '2026-09-05 20:08:03', '2026-09-05 20:08:26', 0);
 INSERT INTO `goods` VALUES (13, 4, 5, '健身器', '家用闲置健身器，锻炼没坚持下来，闲置转让。\r\n完好无弯曲，配件齐全，重量可调。\r\n不邮寄，自提，到手直接练。', 120.00, 288.00, 2, 1, '2026-09-05 20:10:25', '2026-09-05 20:11:42', 0);
 INSERT INTO `goods` VALUES (14, 4, 5, '单双杠', '健身房倒闭，运动器材便宜卖。', 500.00, 2874.00, 2, 1, '2026-09-05 20:21:24', '2026-09-05 20:21:36', 0);
+INSERT INTO `goods` VALUES (17, 4, 4, '奶瓶', '奶瓶现在用不着了。', 50.00, 198.00, 1, 1, '2026-09-13 13:16:20', '2026-09-13 13:36:20', 0);
+INSERT INTO `goods` VALUES (25, 4, 6, '各种杂物', '各种杂物，自选！！！', 9.90, 100.00, 2, 1, '2026-09-13 13:39:35', '2026-09-13 13:52:53', 0);
 
 -- ----------------------------
 -- Table structure for goods_image
@@ -123,7 +132,7 @@ CREATE TABLE `goods_image`  (
   PRIMARY KEY (`id`) USING BTREE,
   INDEX `ix_goods_image_goods_id`(`goods_id` ASC) USING BTREE,
   CONSTRAINT `goods_image_ibfk_1` FOREIGN KEY (`goods_id`) REFERENCES `goods` (`id`) ON DELETE CASCADE ON UPDATE RESTRICT
-) ENGINE = InnoDB AUTO_INCREMENT = 16 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = Dynamic;
+) ENGINE = InnoDB AUTO_INCREMENT = 25 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = Dynamic;
 
 -- ----------------------------
 -- Records of goods_image
@@ -143,6 +152,8 @@ INSERT INTO `goods_image` VALUES (12, 11, '/uploads/74405d0e31f4494ea762d5be9858
 INSERT INTO `goods_image` VALUES (13, 12, '/uploads/0b80a9117c914625a11727666d7793f2.jpg', 0);
 INSERT INTO `goods_image` VALUES (14, 13, '/uploads/2e3b77753bd9451399d144d02a0c0302.jpg', 0);
 INSERT INTO `goods_image` VALUES (15, 14, '/uploads/3a7f46e824ce484d97978af66431ebd8.jpeg', 0);
+INSERT INTO `goods_image` VALUES (16, 17, '/uploads/b8fb3b1cda30465db6a1867f86392153.jpeg', 0);
+INSERT INTO `goods_image` VALUES (24, 25, '/uploads/bd361c1f713e486a9683349d8fa2a709.jpeg', 0);
 
 -- ----------------------------
 -- Table structure for orders
@@ -167,7 +178,7 @@ CREATE TABLE `orders`  (
   CONSTRAINT `orders_ibfk_1` FOREIGN KEY (`goods_id`) REFERENCES `goods` (`id`) ON DELETE RESTRICT ON UPDATE RESTRICT,
   CONSTRAINT `orders_ibfk_2` FOREIGN KEY (`seller_id`) REFERENCES `user` (`id`) ON DELETE RESTRICT ON UPDATE RESTRICT,
   CONSTRAINT `orders_ibfk_3` FOREIGN KEY (`buyer_id`) REFERENCES `user` (`id`) ON DELETE RESTRICT ON UPDATE RESTRICT
-) ENGINE = InnoDB AUTO_INCREMENT = 9 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = Dynamic;
+) ENGINE = InnoDB AUTO_INCREMENT = 10 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = Dynamic;
 
 -- ----------------------------
 -- Records of orders
@@ -180,6 +191,7 @@ INSERT INTO `orders` VALUES (5, '20260905205034d44fef6d', 8, 1, 4, 89.00, 2, '20
 INSERT INTO `orders` VALUES (6, '202609052052445fcde099', 8, 1, 4, 89.00, 2, '2026-09-05 20:53:12', '2026-09-05 20:57:19', 0);
 INSERT INTO `orders` VALUES (7, '202609052056572be28c58', 8, 1, 4, 89.00, 2, '2026-09-05 20:57:24', '2026-09-05 21:03:43', 0);
 INSERT INTO `orders` VALUES (8, '20260905210326f04c27ee', 8, 1, 4, 89.00, 1, '2026-09-05 21:03:53', '2026-09-05 21:05:22', 0);
+INSERT INTO `orders` VALUES (9, '20260913133504374f979f', 5, 1, 4, 100.00, 1, '2026-09-13 13:35:30', '2026-09-13 13:35:48', 0);
 
 -- ----------------------------
 -- Table structure for user
@@ -206,7 +218,7 @@ CREATE TABLE `user`  (
 -- ----------------------------
 INSERT INTO `user` VALUES (1, 'admin', '$2b$12$cP0kmLXqbDPVOJKZ6mklQetKR9N5ll1Q0slMZIM15DPlQgt5NaIgm', '管理员', '/uploads/d1b8f3fa38504b43a47c750dfc7ee52c.png', '', 1, 0, '2026-09-04 22:36:30', '2026-09-05 15:43:27', 0);
 INSERT INTO `user` VALUES (2, 'test', '$2b$12$JVskvL.nKugGigNSznGO/ODBxyj6VKTsbmtsW2iVAgVo40PHi12gK', '测试学生', '', '', 0, 0, '2026-09-04 22:36:30', '2026-09-04 22:36:30', 0);
-INSERT INTO `user` VALUES (3, 'user1', '$2b$12$ftislaM/j.pruGtzQspr9ecWSvjqa7EMw/OjlrO.728vsioTm28me', 'xiaoxiao', '/uploads/71f81e396545491b9f8240ec00c6623a.png', '13048303441', 0, 0, '2026-09-05 08:30:15', '2026-09-05 11:56:28', 0);
+INSERT INTO `user` VALUES (3, 'user1', '$2b$12$bLuTl28fwBMrJzBcI/SiiOGuXe.FR3rguJmnSgEYgbefld.QB4uMm', 'xiaoxiao', '/uploads/71f81e396545491b9f8240ec00c6623a.png', '13048303441', 0, 0, '2026-09-05 08:30:15', '2026-09-13 12:52:18', 0);
 INSERT INTO `user` VALUES (4, 'user2', '$2b$12$pP2FhIQOhqWa5tTLUZYBPe3VhkXcYmyA7kxyWPgYaslYDqv/dveW2', '晓铃', '/uploads/8b43375ac2f141d2b2e3d1d47c1c8c0a.jpeg', '13048303541', 0, 0, '2026-09-05 20:04:12', '2026-09-05 20:06:10', 0);
 
 -- ----------------------------
@@ -231,6 +243,5 @@ CREATE TABLE `user_favorite`  (
 -- ----------------------------
 INSERT INTO `user_favorite` VALUES (3, 1, 1, '2026-09-05 19:46:45');
 INSERT INTO `user_favorite` VALUES (4, 3, 8, '2026-09-05 19:47:58');
-INSERT INTO `user_favorite` VALUES (5, 3, 5, '2026-09-05 19:49:23');
 
 SET FOREIGN_KEY_CHECKS = 1;
